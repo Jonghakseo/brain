@@ -7,14 +7,11 @@ export default function Home() {
   const { chats } = useStorage(conversationStorage);
   const deferredChats = useDeferredValue(chats);
 
-  const sendChat = useCallback(
-    async (content: Chat['content']) => {
-      await conversationStorage.saveUserChat(content);
-      const responseText = await sendToBackground('Chat', { content, history: deferredChats });
-      await conversationStorage.saveAIChat(responseText);
-    },
-    [deferredChats],
-  );
+  const sendChat = useCallback(async (content: Chat['content']) => {
+    const { chats: history } = await conversationStorage.get();
+    await conversationStorage.saveUserChat(content);
+    await sendToBackground('Chat', { content, history });
+  }, []);
 
   return (
     <Layout>

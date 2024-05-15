@@ -1,5 +1,10 @@
 import OpenAI from 'openai';
-import { billingInfoStorage, settingStorage, type Chat } from '@chrome-extension-boilerplate/shared';
+import {
+  billingInfoStorage,
+  settingStorage,
+  type Chat,
+  conversationStorage,
+} from '@chrome-extension-boilerplate/shared';
 import type {
   ChatCompletionUserMessageParam,
   ChatCompletionAssistantMessageParam,
@@ -43,18 +48,38 @@ export class LLM {
   }
 
   private async createChatCompletion(messages: ChatCompletionMessageParam[]) {
-    const { presencePenalty, frequencyPenalty, topP, temperature, maxTokens } = await settingStorage.get();
-    const res = await this.client.chat.completions.create({
-      model: this.model,
-      messages: messages,
-      temperature,
-      max_tokens: maxTokens,
-      top_p: topP,
-      frequency_penalty: frequencyPenalty,
-      presence_penalty: presencePenalty,
-    });
-    res.usage && this.setUsage(res.usage);
-    return res.choices.at(0).message.content;
+    const { openaiConfig } = await settingStorage.get();
+    const { presencePenalty, frequencyPenalty, topP, temperature, maxTokens } = openaiConfig;
+    let text = '';
+    let createdAt;
+    const stream = this.client.beta.chat.completions
+      .stream({
+        model: this.model,
+        messages: messages,
+        temperature,
+        max_tokens: maxTokens,
+        top_p: topP,
+        frequency_penalty: frequencyPenalty,
+        presence_penalty: presencePenalty,
+        stream: true,
+        stream_options: {
+          include_usage: true,
+        },
+      })
+      .on('connect', async () => {
+        createdAt = await conversationStorage.startAIChat();
+      })
+      .on('message', message => console.log('message', message))
+      .on('content', content => {
+        text += content;
+        conversationStorage.updateAIChat(createdAt, text);
+      });
+
+    const result = await stream.finalChatCompletion();
+
+    result.usage && this.setUsage(result.usage);
+
+    return result.choices.at(0).message.content;
   }
 
   async chatCompletion(chatContent: Chat['content']) {

@@ -1,9 +1,10 @@
-import { useCallback, useLayoutEffect, useRef, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { Button, Card, CardBody } from '@material-tailwind/react';
 import { Chat, conversationStorage } from '@chrome-extension-boilerplate/shared';
 import ChatBox from '@src/components/ChatBox';
 import ChatProfile from '@src/components/ChatProfile';
 import ChatSendArea from '@src/components/ChatSendArea';
+import useChatListAutoScroll from '@src/hooks/useChatListAutoScroll';
 
 type ChattingFormProps = {
   chats: Chat[];
@@ -14,25 +15,16 @@ export default function ChattingForm({ chats, sendChat }: ChattingFormProps) {
   const chatListRef = useRef<HTMLUListElement>(null);
   const [loading, setLoading] = useState(false);
 
-  const scrollDown = () => {
-    if (!chatListRef.current) {
-      return;
-    }
-    chatListRef.current?.scrollTo({
-      top: chatListRef.current.scrollHeight,
-      behavior: chatListRef.current.clientTop < 100 ? 'instant' : 'smooth',
-    });
-  };
+  useChatListAutoScroll(chatListRef, chats);
 
-  useLayoutEffect(() => {
-    scrollDown();
-  }, [chats.length]);
-
-  const handleSendChatMessage = useCallback(async (content: Chat['content']) => {
-    setLoading(true);
-    await sendChat(content);
-    setLoading(false);
-  }, []);
+  const handleSendChatMessage = useCallback(
+    async (content: Chat['content']) => {
+      setLoading(true);
+      await sendChat(content);
+      setLoading(false);
+    },
+    [sendChat],
+  );
 
   return (
     <div className="flex flex-col gap-2 max-h-full h-full">
