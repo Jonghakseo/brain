@@ -49,7 +49,8 @@ export class LLM {
   }
 
   private async createChatCompletion(messages: ChatCompletionMessageParam[]) {
-    const { openaiConfig } = await settingStorage.get();
+    const { openaiConfig, extensionConfig } = await settingStorage.get();
+    const { forgetChatAfter } = extensionConfig;
     const { presencePenalty, frequencyPenalty, topP, temperature, maxTokens } = openaiConfig;
     let text = '';
     const createdAt = await conversationStorage.startAIChat();
@@ -57,7 +58,7 @@ export class LLM {
     const stream = this.client.beta.chat.completions
       .runTools({
         model: this.model,
-        messages: messages,
+        messages: messages.slice(-forgetChatAfter),
         temperature,
         max_tokens: maxTokens,
         top_p: topP,

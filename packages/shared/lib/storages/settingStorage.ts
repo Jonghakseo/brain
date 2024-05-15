@@ -10,6 +10,7 @@ type Setting = {
   };
   extensionConfig: {
     captureQuality: number;
+    forgetChatAfter: number;
   };
 };
 
@@ -36,6 +37,7 @@ const storage = createStorage<Setting>(
     },
     extensionConfig: {
       captureQuality: 25,
+      forgetChatAfter: 15,
     },
   },
   {

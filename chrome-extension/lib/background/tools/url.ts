@@ -41,6 +41,49 @@ async function getMyBookmarks() {
   return bookmarks.flatMap(flatten);
 }
 
+const GetHistoryParams = z.object({
+  recentDays: z.number().int().positive().max(7).optional().default(7),
+  searchText: z.string().optional().default(''),
+  historyType: z.enum(['Frequent', 'Recent']).default('Frequent'),
+});
+
+async function getHistory({
+  recentDays = 0,
+  searchText = '',
+  historyType = 'Frequent',
+}: z.infer<typeof GetHistoryParams>) {
+  const millisecondsPerDay = 1000 * 60 * 60 * 24;
+  const daysAgoTime = new Date().getTime() - millisecondsPerDay * recentDays;
+
+  const historyItems = await chrome.history.search({
+    text: searchText,
+    maxResults: 500,
+    startTime: recentDays ? daysAgoTime : undefined,
+  });
+
+  const deduplicatedHistoryItems = historyItems.reduce<chrome.history.HistoryItem[]>((acc, item) => {
+    if (!acc.some(accItem => accItem.title === item.title)) {
+      acc.push(item);
+    }
+    return acc;
+  }, []);
+
+  switch (historyType) {
+    case 'Frequent':
+      // 방문 횟수가 높은 순으로 정렬 후 상위 N 개만 반환
+      return [...deduplicatedHistoryItems]
+        .sort((a, b) => b.visitCount - a.visitCount)
+        .map(history => ({ title: history.title, url: history.url }))
+        .slice(0, 20);
+    case 'Recent':
+      // 방문 시간이 최근 순으로 정렬 후 상위 N 개만 반환
+      return [...deduplicatedHistoryItems]
+        .sort((a, b) => b.lastVisitTime - a.lastVisitTime)
+        .map(history => ({ title: history.title, url: history.url }))
+        .slice(0, 20);
+  }
+}
+
 export const urlTools = [
   zodFunction({
     function: getCurrentUrlWithTitle,
@@ -55,6 +98,11 @@ export const urlTools = [
   zodFunction({
     function: getMyBookmarks,
     schema: z.object({}),
-    description: 'Get all bookmarks. if you want to move url, reference this function.',
+    description: 'Get all bookmarks.',
+  }),
+  zodFunction({
+    function: getHistory,
+    schema: GetHistoryParams,
+    description: 'Get Browser history items.',
   }),
 ];

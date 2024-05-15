@@ -85,6 +85,16 @@ export default function Setting() {
               settingStorage.updateExtensionConfig('captureQuality', e.target.valueAsNumber);
             }}
           />
+          <Input
+            label="Forget Chat After"
+            step={1}
+            min={0}
+            type="number"
+            value={extensionConfig.forgetChatAfter}
+            onChange={e => {
+              settingStorage.updateExtensionConfig('forgetChatAfter', e.target.valueAsNumber);
+            }}
+          />
         </div>
       </section>
     </Layout>
