@@ -1,3 +1,3 @@
-import { useStorageSuspense } from './useStorageSuspense';
+import { useStorageSuspense, useStorage } from './useStorageSuspense';
 
-export { useStorageSuspense };
+export { useStorageSuspense, useStorage };

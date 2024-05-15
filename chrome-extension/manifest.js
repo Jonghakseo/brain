@@ -26,7 +26,7 @@ const manifest = {
     type: 'module',
   },
   action: {
-    default_popup: 'popup/index.html',
+    // default_popup: 'popup/index.html',
     default_icon: 'icon-34.png',
   },
   chrome_url_overrides: {

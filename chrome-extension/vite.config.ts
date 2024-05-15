@@ -3,6 +3,9 @@ import { resolve } from 'path';
 import libAssetsPlugin from '@laynezh/vite-plugin-lib-assets';
 import makeManifestPlugin from './utils/plugins/make-manifest-plugin';
 import { watchRebuildPlugin } from '@chrome-extension-boilerplate/hmr';
+import { configDotenv } from 'dotenv';
+
+configDotenv();
 
 const rootDir = resolve(__dirname);
 const libDir = resolve(rootDir, 'src');
@@ -42,5 +45,9 @@ export default defineConfig({
     rollupOptions: {
       external: ['chrome'],
     },
+  },
+  define: {
+    'process.env.NODE_ENV': `"production"`,
+    'process.env.OPENAI_KEY': `"${process.env.OPENAI_KEY}"`,
   },
 });
