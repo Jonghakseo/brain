@@ -1,18 +1,4 @@
-type Message<D> = {
-  response: ResponseMessage<D>;
-};
-
-type ResponseMessage<Data> =
-  | {
-      type: 'Success';
-      data: Data;
-    }
-  | {
-      type: 'Error';
-      error: Error;
-    };
-
-export function sendToBackground<M extends Message<unknown>>(message: M) {
+export function sendToBackground<M extends Message>(message: M) {
   return new Promise((resolve, reject) => {
     const port = chrome.runtime.connect();
     port.onMessage.addListener((response: M['response']) => {
