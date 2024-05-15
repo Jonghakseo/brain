@@ -10,7 +10,7 @@ export default function useChatListAutoScroll(chatListRef: React.RefObject<HTMLU
       top: chatListRef.current.scrollHeight,
       behavior: 'instant',
     });
-  }, []);
+  }, [chatListRef]);
 
   if (chatListRef.current) {
     const isBottomArea =
@@ -20,5 +20,5 @@ export default function useChatListAutoScroll(chatListRef: React.RefObject<HTMLU
 
   useLayoutEffect(() => {
     scrollDown();
-  }, [chats.length]);
+  }, [chats.length, scrollDown]);
 }

@@ -15,7 +15,7 @@ const manifest = {
   name: '__MSG_extensionName__',
   version: packageJson.version,
   description: '__MSG_extensionDescription__',
-  permissions: ['storage', 'sidePanel', 'activeTab'],
+  permissions: ['storage', 'sidePanel', 'activeTab', 'bookmarks'],
   host_permissions: ['<all_urls>'],
   side_panel: {
     default_path: 'sidepanel/index.html',

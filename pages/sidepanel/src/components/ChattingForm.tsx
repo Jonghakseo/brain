@@ -35,7 +35,7 @@ export default function ChattingForm({ chats, sendChat }: ChattingFormProps) {
         <li className="flex flex-row gap-4 items-start">
           <Card className="w-auto max-w-[90%]">
             <CardBody className="p-4 text-pretty">
-              <ChatBox message="Hello! I'm your browser assistant. How can I help you?" />
+              <ChatBox text="Hello! I'm your browser assistant. How can I help you?" />
             </CardBody>
           </Card>
           <ChatProfile type="ai" />
@@ -47,7 +47,7 @@ export default function ChattingForm({ chats, sendChat }: ChattingFormProps) {
               {!isUser && <ChatProfile type="ai" />}
               <Card className={'w-auto max-w-[90%]' + (isUser ? ' ml-auto' : '')}>
                 <CardBody className="p-4 text-pretty">
-                  <ChatBox message={chat.content.text} image={chat.content.image} />
+                  <ChatBox text={chat.content.text} image={chat.content.image} />
                 </CardBody>
               </Card>
               {isUser && <ChatProfile type="user" />}

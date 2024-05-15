@@ -1,17 +1,17 @@
 import Markdown from 'react-markdown';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { useState } from 'react';
-import { Button } from '@material-tailwind/react';
+import { Button, Spinner } from '@material-tailwind/react';
 import ImageViewModal from '@src/components/ImageViewModal';
 import remarkGfm from 'remark-gfm';
 
 type ChatBoxProps = {
   className?: string;
   image?: string;
-  message?: string;
+  text?: string;
 };
 
-export default function ChatBox({ className = '', image, message }: ChatBoxProps) {
+export default function ChatBox({ className = '', image, text }: ChatBoxProps) {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
@@ -25,6 +25,7 @@ export default function ChatBox({ className = '', image, message }: ChatBoxProps
         </Button>
       )}
       {image && <ImageViewModal image={image} isOpen={isOpen} onClose={() => setIsOpen(false)} />}
+      {!image && !text && <Spinner color="indigo" className="h-5 w-5" />}
       <Markdown
         className="whitespace-normal max-w-full"
         remarkPlugins={[remarkGfm]}
@@ -49,7 +50,7 @@ export default function ChatBox({ className = '', image, message }: ChatBoxProps
             );
           },
         }}>
-        {message}
+        {text}
       </Markdown>
     </div>
   );

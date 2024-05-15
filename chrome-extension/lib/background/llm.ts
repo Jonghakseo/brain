@@ -1,16 +1,17 @@
 import OpenAI from 'openai';
 import {
   billingInfoStorage,
-  settingStorage,
   type Chat,
   conversationStorage,
+  settingStorage,
 } from '@chrome-extension-boilerplate/shared';
 import type {
-  ChatCompletionUserMessageParam,
-  ChatCompletionAssistantMessageParam,
   ChatCompletion,
+  ChatCompletionAssistantMessageParam,
   ChatCompletionMessageParam,
+  ChatCompletionUserMessageParam,
 } from 'openai/resources';
+import { settingTools, billingTools, urlTools } from './tools';
 
 type ChatWithoutCreatedAt = Omit<Chat, 'createdAt'>;
 
@@ -51,9 +52,10 @@ export class LLM {
     const { openaiConfig } = await settingStorage.get();
     const { presencePenalty, frequencyPenalty, topP, temperature, maxTokens } = openaiConfig;
     let text = '';
-    let createdAt;
+    const createdAt = await conversationStorage.startAIChat();
+
     const stream = this.client.beta.chat.completions
-      .stream({
+      .runTools({
         model: this.model,
         messages: messages,
         temperature,
@@ -62,14 +64,17 @@ export class LLM {
         frequency_penalty: frequencyPenalty,
         presence_penalty: presencePenalty,
         stream: true,
-        stream_options: {
-          include_usage: true,
-        },
+        stream_options: { include_usage: true },
+        tools: [...billingTools, ...settingTools, ...urlTools],
       })
-      .on('connect', async () => {
-        createdAt = await conversationStorage.startAIChat();
-      })
+      .on('connect', async () => {})
+      .on('functionCall', usage => console.log('functionCall', usage))
+      .on('functionCallResult', usage => console.log('functionCallResult', usage))
       .on('message', message => console.log('message', message))
+      .on('error', error => {
+        stream.abort();
+        throw error;
+      })
       .on('content', content => {
         text += content;
         conversationStorage.updateAIChat(createdAt, text);
