@@ -14,7 +14,7 @@ export default function Billing() {
       <Typography>Total Token: {numberWithCommas(totalToken)}</Typography>
       <Typography>Token Usage Input: {numberWithCommas(tokenUsageInfo.input)}</Typography>
       <Typography>Token Usage Output: {numberWithCommas(tokenUsageInfo.output)}</Typography>
-      <Button color="blue" size="lg" className="mt-4" onClick={billingInfoStorage.reset}>
+      <Button color="blue" size="sm" className="mt-4" onClick={billingInfoStorage.reset}>
         Reset
       </Button>
     </Layout>

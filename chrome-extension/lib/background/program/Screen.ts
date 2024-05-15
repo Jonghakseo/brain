@@ -1,7 +1,9 @@
+import { settingStorage } from '@chrome-extension-boilerplate/shared';
+
 export class Screen {
-  static async capture(quality: number = 25) {
+  static async capture() {
     return await chrome.tabs.captureVisibleTab({
-      quality,
+      quality: (await settingStorage.get()).extensionConfig.captureQuality,
       format: 'jpeg',
     });
   }
