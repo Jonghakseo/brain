@@ -25,9 +25,9 @@ export class LLM {
   }
 
   private async setUsage(usage: ChatCompletion['usage']) {
-    const { completion_tokens, prompt_tokens } = usage;
-    await billingInfoStorage.addInputTokens(prompt_tokens);
-    await billingInfoStorage.addOutputTokens(completion_tokens);
+    const { completion_tokens, prompt_tokens } = usage ?? {};
+    prompt_tokens && (await billingInfoStorage.addInputTokens(prompt_tokens));
+    completion_tokens && (await billingInfoStorage.addOutputTokens(completion_tokens));
   }
 
   private convertChatToOpenAIFormat(
@@ -43,9 +43,7 @@ export class LLM {
       }
       return { role: 'user', content };
     }
-    if (chat.type === 'ai') {
-      return { role: 'assistant', content: chat.content.text };
-    }
+    return { role: 'assistant', content: chat.content.text };
   }
 
   private async createChatCompletion(messages: ChatCompletionMessageParam[]) {
@@ -85,7 +83,7 @@ export class LLM {
 
     result.usage && this.setUsage(result.usage);
 
-    return result.choices.at(0).message.content;
+    return result.choices.at(0)?.message.content;
   }
 
   async chatCompletion(chatContent: Chat['content']) {

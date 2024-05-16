@@ -1,8 +1,8 @@
 // eslint-disable-next-line @typescript-eslint/triple-slash-reference
 import 'webextension-polyfill';
-import { Screen } from './program/Screen';
-import { LLM } from './llm';
 import type { Message } from '@chrome-extension-boilerplate/shared';
+import { LLM } from '@lib/background/llm';
+import { Screen } from '@lib/background/program/Screen';
 
 /**
  * when click the extension icon, open(or close) the side panel automatically
@@ -22,7 +22,7 @@ chrome.runtime.onConnect.addListener(port => {
   port.onDisconnect.addListener(() => console.log('Port disconnected'));
 
   port.onMessage.addListener(async (message: Message) => {
-    console.log('message.type', message);
+    console.log('message', message);
     try {
       switch (message.type) {
         case 'ScreenCapture': {
@@ -31,7 +31,7 @@ chrome.runtime.onConnect.addListener(port => {
           break;
         }
         case 'Chat': {
-          const llm = new LLM(process.env.OPENAI_KEY);
+          const llm = new LLM(process.env.OPENAI_KEY as string);
           const response = await (() => {
             if (message.payload.history) {
               return llm.chatCompletionWithHistory(message.payload.content, message.payload.history);
@@ -40,11 +40,14 @@ chrome.runtime.onConnect.addListener(port => {
             }
           })();
 
+          if (!response) {
+            throw new Error('No response from AI');
+          }
           sendResponse({ type: 'Chat', response });
         }
       }
     } catch (e) {
-      sendResponse({ type: (message.type + '__Error') as Message['type'], response: e });
+      sendResponse({ type: (message.type + '__Error') as Message['type'], response: e as string });
     }
   });
 });

@@ -94,7 +94,7 @@ function ChatSendArea({ onSend, loading }: ChatSendAreaProps) {
         containerProps={{ className: 'grid h-full  min-w-[120px]' }}
         labelProps={{ className: 'before:content-none after:content-none' }}
       />
-      <div className="shrink-0">
+      <div className="shrink-0 invisible sm:visible">
         {loading ? (
           <Spinner color="indigo" className="h-5 w-5" />
         ) : (

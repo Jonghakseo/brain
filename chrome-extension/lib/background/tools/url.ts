@@ -3,24 +3,26 @@ import { zodFunction } from './zodFunction';
 
 async function getCurrentTab() {
   const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
-  if (tabs.length === 0) {
-    throw new Error('No active tab found');
-  }
   return tabs.at(0);
 }
 
 async function getCurrentUrlWithTitle() {
   const tab = await getCurrentTab();
-  return { url: tab.url, title: tab.title };
+  return { url: tab?.url, title: tab?.title };
 }
 
 const MoveCurrentTabUrlParams = z.object({
   url: z.string().url(),
+  isNewTab: z.boolean().optional().default(false),
 });
 
-async function moveCurrentTabUrl({ url }: z.infer<typeof MoveCurrentTabUrlParams>) {
+async function moveCurrentTabUrl({ url, isNewTab = false }: z.infer<typeof MoveCurrentTabUrlParams>) {
   const tab = await getCurrentTab();
-  await chrome.tabs.update(tab.id, { url });
+  if (!tab || isNewTab) {
+    await chrome.tabs.create({ url });
+  } else {
+    await chrome.tabs.update(tab.id, { url });
+  }
   return { url };
 }
 
@@ -44,14 +46,9 @@ async function getMyBookmarks() {
 const GetHistoryParams = z.object({
   recentDays: z.number().int().positive().max(7).optional().default(7),
   searchText: z.string().optional().default(''),
-  historyType: z.enum(['Frequent', 'Recent']).default('Frequent'),
 });
 
-async function getHistory({
-  recentDays = 0,
-  searchText = '',
-  historyType = 'Frequent',
-}: z.infer<typeof GetHistoryParams>) {
+async function getHistory({ recentDays = 0, searchText = '' }: z.infer<typeof GetHistoryParams>) {
   const millisecondsPerDay = 1000 * 60 * 60 * 24;
   const daysAgoTime = new Date().getTime() - millisecondsPerDay * recentDays;
 
@@ -68,20 +65,16 @@ async function getHistory({
     return acc;
   }, []);
 
-  switch (historyType) {
-    case 'Frequent':
-      // 방문 횟수가 높은 순으로 정렬 후 상위 N 개만 반환
-      return [...deduplicatedHistoryItems]
-        .sort((a, b) => b.visitCount - a.visitCount)
-        .map(history => ({ title: history.title, url: history.url }))
-        .slice(0, 20);
-    case 'Recent':
-      // 방문 시간이 최근 순으로 정렬 후 상위 N 개만 반환
-      return [...deduplicatedHistoryItems]
-        .sort((a, b) => b.lastVisitTime - a.lastVisitTime)
-        .map(history => ({ title: history.title, url: history.url }))
-        .slice(0, 20);
-  }
+  // 방문 시간이 최근 순으로 정렬 후 상위 N 개만 반환
+  return [...deduplicatedHistoryItems]
+    .sort((a, b) => b.lastVisitTime - a.lastVisitTime)
+    .map(history => ({ title: history.title, url: history.url }))
+    .slice(0, 20);
+}
+
+async function getMostVisitedUrls() {
+  const sites = await chrome.topSites.get();
+  return sites;
 }
 
 export const urlTools = [
@@ -104,5 +97,10 @@ export const urlTools = [
     function: getHistory,
     schema: GetHistoryParams,
     description: 'Get Browser history items.',
+  }),
+  zodFunction({
+    function: getMostVisitedUrls,
+    schema: z.object({}),
+    description: 'Get most visited urls.',
   }),
 ];

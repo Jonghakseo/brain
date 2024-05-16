@@ -17,7 +17,9 @@ const UpdateOpenAIConfigSchema = z.object({
 
 async function updateOpenAIConfig(params: z.infer<typeof UpdateOpenAIConfigSchema>) {
   for await (const key of Object.keys(params)) {
-    await settingStorage.updateOpenAIConfig(key as keyof typeof params, params[key]);
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore
+    await settingStorage.updateOpenAIConfig(key, params[key]);
   }
   const { openaiConfig } = await settingStorage.get();
   return openaiConfig;
