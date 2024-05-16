@@ -69,7 +69,6 @@ function ResetButton() {
       variant="gradient"
       className="!fixed right-1 top-12 z-10 flex items-center gap-3"
       onClick={() => conversationStorage.reset()}>
-      Clear
       <svg
         xmlns="http://www.w3.org/2000/svg"
         fill="none"
