@@ -18,7 +18,7 @@ export default function Setting() {
             label="System Prompt"
             value={openaiConfig.systemPrompt}
             onChange={e => {
-              settingStorage.updateOpenAIConfig('systemPrompt', e.target.valueAsNumber);
+              settingStorage.updateOpenAIConfig('systemPrompt', e.target.value);
             }}
           />
           <Input

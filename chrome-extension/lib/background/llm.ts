@@ -60,7 +60,7 @@ export class LLM {
 
     const systemMessage: ChatCompletionSystemMessageParam = {
       role: 'system',
-      content: openaiConfig.systemPrompt ?? 'You are chrome browser OpenAI assistant.',
+      content: openaiConfig.systemPrompt,
     };
     const stream = this.client.beta.chat.completions
       .runTools({

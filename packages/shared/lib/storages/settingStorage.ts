@@ -2,7 +2,7 @@ import { BaseStorage, createStorage, StorageType } from '@lib/storages/base';
 
 type Setting = {
   openaiConfig: {
-    systemPrompt?: string;
+    systemPrompt: string;
     frequencyPenalty: number;
     presencePenalty: number;
     maxTokens: number;
@@ -31,6 +31,7 @@ const storage = createStorage<Setting>(
   'setting',
   {
     openaiConfig: {
+      systemPrompt: 'You are chrome browser OpenAI assistant.',
       frequencyPenalty: 0,
       presencePenalty: 0,
       maxTokens: 300,

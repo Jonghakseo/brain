@@ -20,7 +20,7 @@ const manifest = {
   side_panel: {
     default_path: 'sidepanel/index.html',
   },
-  options_page: 'options/index.html',
+  // options_page: 'options/index.html',
   background: {
     service_worker: 'background.iife.js',
     type: 'module',
@@ -29,9 +29,9 @@ const manifest = {
     // default_popup: 'popup/index.html',
     default_icon: 'icon-34.png',
   },
-  chrome_url_overrides: {
-    newtab: 'newtab/index.html',
-  },
+  // chrome_url_overrides: {
+  //   newtab: 'newtab/index.html',
+  // },
   icons: {
     128: 'icon-128.png',
   },
@@ -40,16 +40,16 @@ const manifest = {
       matches: ['http://*/*', 'https://*/*', '<all_urls>'],
       js: ['content/index.iife.js'],
     },
-    {
-      matches: ['http://*/*', 'https://*/*', '<all_urls>'],
-      js: ['content-ui/index.iife.js'],
-    },
-    {
-      matches: ['http://*/*', 'https://*/*', '<all_urls>'],
-      css: ['content.css'], // public folder
-    },
+    // {
+    //   matches: ['http://*/*', 'https://*/*', '<all_urls>'],
+    //   js: ['content-ui/index.iife.js'],
+    // },
+    // {
+    //   matches: ['http://*/*', 'https://*/*', '<all_urls>'],
+    //   css: ['content.css'], // public folder
+    // },
   ],
-  devtools_page: 'devtools/index.html',
+  // devtools_page: 'devtools/index.html',
   web_accessible_resources: [
     {
       resources: ['*.js', '*.css', '*.svg', 'icon-128.png', 'icon-34.png'],
