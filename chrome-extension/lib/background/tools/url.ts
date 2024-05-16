@@ -2,7 +2,7 @@ import { z } from 'zod';
 import { zodFunction } from './zodFunction';
 
 async function getCurrentTab() {
-  const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
+  const tabs = await chrome.tabs.query({ active: true });
   return tabs.at(0);
 }
 
@@ -13,12 +13,14 @@ async function getCurrentUrlWithTitle() {
 
 const MoveCurrentTabUrlParams = z.object({
   url: z.string().url(),
-  isNewTab: z.boolean().optional().default(false),
+  isNewTab: z.boolean().optional(),
 });
 
 async function moveCurrentTabUrl({ url, isNewTab = false }: z.infer<typeof MoveCurrentTabUrlParams>) {
   const tab = await getCurrentTab();
-  if (!tab || isNewTab) {
+  if (!tab?.id) {
+    await chrome.tabs.create({ url });
+  } else if (isNewTab) {
     await chrome.tabs.create({ url });
   } else {
     await chrome.tabs.update(tab.id, { url });
@@ -37,15 +39,15 @@ async function getMyBookmarks() {
     if (node.children) {
       return node.children.flatMap(flatten);
     }
-    return [{ url: node.url, title: node.title }];
+    return [{ url: node.url ?? 'unknown', title: node.title }];
   };
 
   return bookmarks.flatMap(flatten);
 }
 
 const GetHistoryParams = z.object({
-  recentDays: z.number().int().positive().max(7).optional().default(7),
-  searchText: z.string().optional().default(''),
+  recentDays: z.number().int().positive().max(7).optional(),
+  searchText: z.string().optional(),
 });
 
 async function getHistory({ recentDays = 0, searchText = '' }: z.infer<typeof GetHistoryParams>) {
@@ -67,7 +69,7 @@ async function getHistory({ recentDays = 0, searchText = '' }: z.infer<typeof Ge
 
   // 방문 시간이 최근 순으로 정렬 후 상위 N 개만 반환
   return [...deduplicatedHistoryItems]
-    .sort((a, b) => b.lastVisitTime - a.lastVisitTime)
+    .sort((a, b) => (b.lastVisitTime ?? 0) - (a.lastVisitTime ?? 0))
     .map(history => ({ title: history.title, url: history.url }))
     .slice(0, 20);
 }

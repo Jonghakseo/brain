@@ -1,22 +1,12 @@
 import { createPortal } from 'react-dom';
-import { useEffect, useRef } from 'react';
+import { Chat } from '@chrome-extension-boilerplate/shared';
 
 type ImageViewModalProps = {
-  image: string;
+  image: Chat['content']['image'];
   isOpen: boolean;
   onClose: () => void;
 };
 export default function ImageViewModal({ image, isOpen, onClose }: ImageViewModalProps) {
-  const imageSize = useRef<{ width: number; height: number }>(null);
-
-  useEffect(() => {
-    calculateImageSize(image).then(size => {
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      // @ts-ignore
-      imageSize.current = size;
-    });
-  }, [image]);
-
   return createPortal(
     isOpen ? (
       // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
@@ -34,7 +24,7 @@ export default function ImageViewModal({ image, isOpen, onClose }: ImageViewModa
           className="relative p-4 w-full max-h-[80%] max-w-[80%] overflow-y-scroll bg-white rounded-lg shadow dark:bg-gray-700">
           <div className="relative">
             <div className="flex items-center justify-between p-0 border-b rounded-t dark:border-gray-600">
-              <h3 className="text-m font-semibold text-gray-900 dark:text-white">{`W:${imageSize.current?.width} x H:${imageSize.current?.height} - ${calculateImageFileSize(image)}Kb`}</h3>
+              <h3 className="text-m font-semibold text-gray-900 dark:text-white">{`W:${image?.w} x H:${image?.h} - ${image?.kb}Kb`}</h3>
               <button
                 type="button"
                 onClick={onClose}
@@ -55,7 +45,7 @@ export default function ImageViewModal({ image, isOpen, onClose }: ImageViewModa
                 </svg>
               </button>
             </div>
-            <img className="h-auto w-full rounded-lg object-cover object-center" src={image} alt="detail" />
+            <img className="h-auto w-full rounded-lg object-cover object-center" src={image?.base64} alt="detail" />
           </div>
         </div>
       </div>
@@ -63,22 +53,3 @@ export default function ImageViewModal({ image, isOpen, onClose }: ImageViewModa
     document.body,
   );
 }
-
-const calculateImageFileSize = (base64Image: string) => {
-  const base64String = base64Image.substring(base64Image.indexOf(',') + 1);
-  const bits = base64String.length * 6; // 567146
-  const bytes = bits / 8;
-  const kb = Math.ceil(bytes / 1000);
-  return kb;
-};
-
-const calculateImageSize = (base64Image: string) => {
-  return new Promise<{ width: number; height: number }>((resolve, reject) => {
-    const image = new Image();
-    image.src = base64Image;
-    image.onload = () => {
-      resolve({ width: image.width, height: image.height });
-    };
-    image.onerror = reject;
-  });
-};

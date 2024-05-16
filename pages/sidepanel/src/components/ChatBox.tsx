@@ -4,11 +4,12 @@ import { useEffect, useState } from 'react';
 import { Button, IconButton, Spinner } from '@material-tailwind/react';
 import ImageViewModal from '@src/components/ImageViewModal';
 import remarkGfm from 'remark-gfm';
+import { Chat } from '@chrome-extension-boilerplate/shared';
 
 type ChatBoxProps = {
   className?: string;
-  image?: string;
-  text?: string;
+  image?: Chat['content']['image'];
+  text?: Chat['content']['text'];
 };
 
 export default function ChatBox({ className = '', image, text }: ChatBoxProps) {
@@ -24,7 +25,7 @@ export default function ChatBox({ className = '', image, text }: ChatBoxProps) {
           variant="outlined"
           className="rounded-md relative flex items-center !border-0 !p-0"
           onClick={() => setIsOpen(true)}>
-          <img src={image} className="h-16 w-fit rounded-md" alt="screen capture" />
+          <img src={image.base64} className="h-16 w-fit rounded-md" alt="screen capture" />
         </Button>
       )}
       {image && <ImageViewModal image={image} isOpen={isOpen} onClose={() => setIsOpen(false)} />}

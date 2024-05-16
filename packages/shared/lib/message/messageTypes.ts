@@ -20,4 +20,35 @@ export interface ChatMessage extends BaseMessage {
   response: string;
 }
 
+export interface GetNearbyElementsMessage extends BaseMessage {
+  type: 'getNearbyElements';
+  payload: {
+    x: number;
+    y: number;
+    distance: number;
+    maxCount: number;
+  };
+}
+export interface ClickElementMessage extends BaseMessage {
+  type: 'clickElement';
+  payload: {
+    elementId: number;
+  };
+}
+
+export interface TypeInputMessage extends BaseMessage {
+  type: 'typeInput';
+  payload: {
+    elementId: number;
+    text: string;
+  };
+}
+export interface KeyBoardPressMessage extends BaseMessage {
+  type: 'keyboardPress';
+  payload: {
+    elementId?: number;
+    key: 'Enter' | 'Backspace' | 'Spacebar';
+  };
+}
+
 export type Message = CaptureMessage | ChatMessage;

@@ -35,8 +35,15 @@ function ChatSendArea({ onSend, loading }: ChatSendAreaProps) {
     }
   };
 
-  const sendMessage = () => {
-    onSend({ text, image: imageUrl });
+  const sendMessage = async () => {
+    if (imageUrl) {
+      const kb = calculateImageFileSize(imageUrl);
+      const { width: w, height: h } = await calculateImageSize(imageUrl);
+      onSend({ text, image: { base64: imageUrl, kb, w, h } });
+    } else {
+      onSend({ text });
+    }
+
     setText('');
     resetImage();
   };
@@ -120,3 +127,22 @@ function ChatSendArea({ onSend, loading }: ChatSendAreaProps) {
 }
 
 export default memo(ChatSendArea);
+
+const calculateImageFileSize = (base64Image: string) => {
+  const base64String = base64Image.substring(base64Image.indexOf(',') + 1);
+  const bits = base64String.length * 6; // 567146
+  const bytes = bits / 8;
+  const kb = Math.ceil(bytes / 1000);
+  return kb;
+};
+
+const calculateImageSize = (base64Image: string) => {
+  return new Promise<{ width: number; height: number }>((resolve, reject) => {
+    const image = new Image();
+    image.src = base64Image;
+    image.onload = () => {
+      resolve({ width: image.width / window.devicePixelRatio, height: image.height / window.devicePixelRatio });
+    };
+    image.onerror = reject;
+  });
+};

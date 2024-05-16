@@ -11,7 +11,7 @@ import type {
   ChatCompletionMessageParam,
   ChatCompletionUserMessageParam,
 } from 'openai/resources';
-import { settingTools, billingTools, urlTools } from './tools';
+import { domTools, settingTools, billingTools, urlTools } from '@lib/background/tools';
 
 type ChatWithoutCreatedAt = Omit<Chat, 'createdAt'>;
 
@@ -39,7 +39,11 @@ export class LLM {
         content.push({ type: 'text', text: chat.content.text });
       }
       if (chat.content.image) {
-        content.push({ type: 'image_url', image_url: { url: chat.content.image } });
+        content.push({
+          type: 'text',
+          text: `This Image's width:${chat.content.image.w} height:${chat.content.image.h}`,
+        });
+        content.push({ type: 'image_url', image_url: { url: chat.content.image.base64 } });
       }
       return { role: 'user', content };
     }
@@ -64,7 +68,7 @@ export class LLM {
         presence_penalty: presencePenalty,
         stream: true,
         stream_options: { include_usage: true },
-        tools: [...billingTools, ...settingTools, ...urlTools],
+        tools: [...billingTools, ...settingTools, ...urlTools, ...domTools],
       })
       .on('connect', async () => {})
       .on('functionCall', usage => console.log('functionCall', usage))
