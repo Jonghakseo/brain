@@ -1,5 +1,5 @@
 import Layout from '@src/components/Layout';
-import { Input, Typography } from '@material-tailwind/react';
+import { Input, Switch, Textarea, Typography } from '@material-tailwind/react';
 import { settingStorage, useStorage } from '@chrome-extension-boilerplate/shared';
 
 export default function Setting() {
@@ -14,6 +14,13 @@ export default function Setting() {
           <Typography as="h2" className="text-xl font-semibold">
             OpenAI Config
           </Typography>
+          <Textarea
+            label="System Prompt"
+            value={openaiConfig.systemPrompt}
+            onChange={e => {
+              settingStorage.updateOpenAIConfig('systemPrompt', e.target.valueAsNumber);
+            }}
+          />
           <Input
             label="Temperature"
             step={0.1}
@@ -93,6 +100,13 @@ export default function Setting() {
             value={extensionConfig.forgetChatAfter}
             onChange={e => {
               settingStorage.updateExtensionConfig('forgetChatAfter', e.target.valueAsNumber);
+            }}
+          />
+          <Switch
+            label="Auto Capture"
+            checked={extensionConfig.autoCapture}
+            onClick={e => {
+              settingStorage.updateExtensionConfig('autoCapture', e.currentTarget.checked);
             }}
           />
         </div>

@@ -6,17 +6,9 @@ import {
   KeyBoardPressMessage,
   TypeInputMessage,
 } from '@chrome-extension-boilerplate/shared';
+import { getCurrentTab } from '@lib/background/tools/getCurrentTab';
 
 const delay = async (ms: number) => new Promise<void>(resolve => setTimeout(resolve, ms));
-
-async function getCurrentTab() {
-  const tabs = await chrome.tabs.query({ active: true });
-  const activeTab = tabs.at(0);
-  if (!activeTab?.id) {
-    throw new Error('No active tab');
-  }
-  return activeTab as chrome.tabs.Tab & { id: number };
-}
 
 const GetInteractiveElementsNearbyPointParams = z.object({
   x: z.number(),
@@ -26,7 +18,11 @@ const GetInteractiveElementsNearbyPointParams = z.object({
 });
 async function getInteractiveElementsNearbyPoint(params: z.infer<typeof GetInteractiveElementsNearbyPointParams>) {
   const tab = await getCurrentTab();
+
   async function call() {
+    if (!tab?.id) {
+      throw new Error('Tab not found');
+    }
     return await chrome.tabs.sendMessage(tab.id, {
       type: 'getNearbyElements',
       payload: params,
@@ -49,6 +45,9 @@ async function clickElement(params: z.infer<typeof ClickElementParams>) {
   const tab = await getCurrentTab();
 
   async function call() {
+    if (!tab?.id) {
+      throw new Error('Tab not found');
+    }
     return chrome.tabs.sendMessage(tab.id, {
       type: 'clickElement',
       payload: params,
@@ -71,7 +70,11 @@ const TypeInputParams = z.object({
 
 async function typeInput(params: z.infer<typeof TypeInputParams>) {
   const tab = await getCurrentTab();
+
   async function call() {
+    if (!tab?.id) {
+      throw new Error('Tab not found');
+    }
     return await chrome.tabs.sendMessage(tab.id, {
       type: 'typeInput',
       payload: params,
@@ -93,7 +96,11 @@ const KeyboardPressParams = z.object({
 
 async function keyboardPress(params: z.infer<typeof KeyboardPressParams>) {
   const tab = await getCurrentTab();
+
   async function call() {
+    if (!tab?.id) {
+      throw new Error('Tab not found');
+    }
     return await chrome.tabs.sendMessage(tab.id, {
       type: 'keyboardPress',
       payload: params,

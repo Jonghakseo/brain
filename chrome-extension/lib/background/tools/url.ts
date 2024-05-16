@@ -1,10 +1,6 @@
 import { z } from 'zod';
 import { zodFunction } from './zodFunction';
-
-async function getCurrentTab() {
-  const tabs = await chrome.tabs.query({ active: true });
-  return tabs.at(0);
-}
+import { getCurrentTab } from '@lib/background/tools/getCurrentTab';
 
 async function getCurrentUrlWithTitle() {
   const tab = await getCurrentTab();

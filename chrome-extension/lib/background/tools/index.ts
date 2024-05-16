@@ -3,3 +3,4 @@ export * from './billing';
 export * from './settings';
 export * from './url';
 export * from './dom';
+export * from './etc';

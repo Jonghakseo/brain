@@ -183,6 +183,9 @@ importers:
       '@chrome-extension-boilerplate/shared':
         specifier: workspace:*
         version: link:../../packages/shared
+      party-js:
+        specifier: ^2.2.0
+        version: 2.2.0
     devDependencies:
       '@chrome-extension-boilerplate/hmr':
         specifier: workspace:*
@@ -2671,6 +2674,9 @@ packages:
 
   parse-entities@4.0.1:
     resolution: {integrity: sha512-SWzvYcSJh4d/SGLIOQfZ/CoNv6BTlI6YEQ7Nj82oDVnRpwe/Z/F1EMx42x3JAOwGBlCjeCH0BRJQbQ/opHL17w==}
+
+  party-js@2.2.0:
+    resolution: {integrity: sha512-50hGuALCpvDTrQLPQ1fgUgxKIWAH28ShVkmeK/3zhO0YJyCqkhrZhQEkWPxDYLvbFJ7YAXyROmFEu35gKpZLtQ==}
 
   path-exists@4.0.0:
     resolution: {integrity: sha512-ak9Qy5Q7jYb2Wwcey5Fpvg2KoAc/ZIhLSLOSBmRmygPsGwkVVt0fZa0qrtMz+m6tJTAHfZQ8FnmB4MG4LWy7/w==}
@@ -6225,6 +6231,8 @@ snapshots:
       is-alphanumerical: 2.0.1
       is-decimal: 2.0.1
       is-hexadecimal: 2.0.1
+
+  party-js@2.2.0: {}
 
   path-exists@4.0.0: {}
 

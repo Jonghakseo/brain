@@ -2,6 +2,7 @@ import { BaseStorage, createStorage, StorageType } from '@lib/storages/base';
 
 type Setting = {
   openaiConfig: {
+    systemPrompt?: string;
     frequencyPenalty: number;
     presencePenalty: number;
     maxTokens: number;
@@ -9,6 +10,7 @@ type Setting = {
     temperature: number;
   };
   extensionConfig: {
+    autoCapture: boolean;
     captureQuality: number;
     forgetChatAfter: number;
   };
@@ -36,8 +38,9 @@ const storage = createStorage<Setting>(
       temperature: 0.7,
     },
     extensionConfig: {
+      autoCapture: false,
       captureQuality: 25,
-      forgetChatAfter: 15,
+      forgetChatAfter: 10,
     },
   },
   {

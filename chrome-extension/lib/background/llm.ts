@@ -9,9 +9,10 @@ import type {
   ChatCompletion,
   ChatCompletionAssistantMessageParam,
   ChatCompletionMessageParam,
+  ChatCompletionSystemMessageParam,
   ChatCompletionUserMessageParam,
 } from 'openai/resources';
-import { domTools, settingTools, billingTools, urlTools } from '@lib/background/tools';
+import { billingTools, etcTools, settingTools, urlTools } from '@lib/background/tools';
 
 type ChatWithoutCreatedAt = Omit<Chat, 'createdAt'>;
 
@@ -57,10 +58,14 @@ export class LLM {
     let text = '';
     const createdAt = await conversationStorage.startAIChat();
 
+    const systemMessage: ChatCompletionSystemMessageParam = {
+      role: 'system',
+      content: openaiConfig.systemPrompt ?? 'You are chrome browser OpenAI assistant.',
+    };
     const stream = this.client.beta.chat.completions
       .runTools({
         model: this.model,
-        messages: messages.slice(-forgetChatAfter),
+        messages: [systemMessage, ...messages.slice(-forgetChatAfter)],
         temperature,
         max_tokens: maxTokens,
         top_p: topP,
@@ -68,7 +73,14 @@ export class LLM {
         presence_penalty: presencePenalty,
         stream: true,
         stream_options: { include_usage: true },
-        tools: [...billingTools, ...settingTools, ...urlTools, ...domTools],
+        tools: [
+          ...billingTools,
+          ...settingTools,
+          ...urlTools,
+          // TODO: this function is unstable
+          // ...domTools
+          ...etcTools,
+        ],
       })
       .on('connect', async () => {})
       .on('functionCall', usage => console.log('functionCall', usage))

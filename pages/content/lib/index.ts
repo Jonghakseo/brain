@@ -9,8 +9,10 @@ import {
   ClickElementMessage,
   GetNearbyElementsMessage,
   KeyBoardPressMessage,
+  PartyEffectMessage,
   TypeInputMessage,
 } from '@chrome-extension-boilerplate/shared';
+import { showPartyEffect } from '@lib/party';
 
 const rpcMethods = {
   getNearbyElements: (payload: GetNearbyElementsMessage['payload']) => {
@@ -52,6 +54,10 @@ const rpcMethods = {
     await domAction.keyPress(element, _key);
     return { success: true };
   },
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  partyEffect: async (_: PartyEffectMessage['payload']) => {
+    showPartyEffect();
+  },
 };
 
 const isRPCMethod = (method: string): method is keyof typeof rpcMethods => {
@@ -59,16 +65,15 @@ const isRPCMethod = (method: string): method is keyof typeof rpcMethods => {
 };
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  try {
-    if (!isRPCMethod(message.type)) {
-      throw new Error(`Unknown method: ${message.type}`);
+  if (isRPCMethod(message.type)) {
+    try {
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
+      sendResponse(rpcMethods[message.type](message.payload));
+    } catch (e) {
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
+      sendResponse({ error: e.message });
     }
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-ignore
-    sendResponse(rpcMethods[message.type](message.payload));
-  } catch (e) {
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-ignore
-    sendResponse({ error: e.message });
   }
 });

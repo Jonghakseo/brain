@@ -1,6 +1,6 @@
-import { Chat, sendToBackground } from '@chrome-extension-boilerplate/shared';
-import { memo, useRef, useState } from 'react';
-import { IconButton, Spinner, Textarea } from '@material-tailwind/react';
+import { Chat, sendToBackground, settingStorage, useStorage } from '@chrome-extension-boilerplate/shared';
+import { memo, ReactNode, useRef, useState } from 'react';
+import { IconButton, Popover, PopoverContent, PopoverHandler, Spinner, Textarea } from '@material-tailwind/react';
 
 type ChatSendAreaProps = {
   loading: boolean;
@@ -11,6 +11,8 @@ function ChatSendArea({ onSend, loading }: ChatSendAreaProps) {
   const formRef = useRef<HTMLFormElement>(null);
   const [imageUrl, setImageUrl] = useState<string | undefined>(undefined);
   const [text, setText] = useState('');
+  const { extensionConfig } = useStorage(settingStorage);
+  const { autoCapture } = extensionConfig;
 
   const resetImage = () => {
     setImageUrl(undefined);
@@ -36,10 +38,11 @@ function ChatSendArea({ onSend, loading }: ChatSendAreaProps) {
   };
 
   const sendMessage = async () => {
-    if (imageUrl) {
-      const kb = calculateImageFileSize(imageUrl);
-      const { width: w, height: h } = await calculateImageSize(imageUrl);
-      onSend({ text, image: { base64: imageUrl, kb, w, h } });
+    const base64 = autoCapture ? await sendToBackground('ScreenCapture') : imageUrl;
+    if (base64) {
+      const kb = calculateImageFileSize(base64);
+      const { width: w, height: h } = await calculateImageSize(base64);
+      onSend({ text, image: { base64, kb, w, h } });
     } else {
       onSend({ text });
     }
@@ -53,25 +56,27 @@ function ChatSendArea({ onSend, loading }: ChatSendAreaProps) {
       ref={formRef}
       onSubmit={e => {
         e.preventDefault();
-        sendMessage();
+        void sendMessage();
       }}
       className="flex w-full flex-row items-center gap-2 rounded-[24px] border border-gray-900/10 bg-gray-900/5 p-2">
       <div className="flex flex-col">
-        <IconButton variant="text" className="rounded-full" onClick={captureScreen}>
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-            strokeWidth={2}
-            stroke="currentColor"
-            className="h-5 w-5">
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z"
-            />
-          </svg>
-        </IconButton>
+        <WithPopover enabled={autoCapture} content={<div className="p-2 text-sm">Auto Capture is enabled</div>}>
+          <IconButton variant="text" className="rounded-full" onClick={captureScreen}>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              strokeWidth={2}
+              stroke="currentColor"
+              className="h-5 w-5">
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z"
+              />
+            </svg>
+          </IconButton>
+        </WithPopover>
         {imageUrl && (
           <IconButton onClick={resetImage} variant="text" className="rounded-full flex items-center content-center">
             <svg
@@ -127,6 +132,24 @@ function ChatSendArea({ onSend, loading }: ChatSendAreaProps) {
 }
 
 export default memo(ChatSendArea);
+
+type WithPopoverProps = {
+  enabled: boolean;
+  content: ReactNode;
+  children: ReactNode;
+};
+
+function WithPopover({ enabled, children, content }: WithPopoverProps) {
+  if (!enabled) {
+    return <>{children}</>;
+  }
+  return (
+    <Popover>
+      <PopoverHandler>{children}</PopoverHandler>
+      <PopoverContent className="p-1 !left-2">{content}</PopoverContent>
+    </Popover>
+  );
+}
 
 const calculateImageFileSize = (base64Image: string) => {
   const base64String = base64Image.substring(base64Image.indexOf(',') + 1);

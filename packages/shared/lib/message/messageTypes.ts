@@ -20,6 +20,12 @@ export interface ChatMessage extends BaseMessage {
   response: string;
 }
 
+export type Message = CaptureMessage | ChatMessage;
+
+export interface PartyEffectMessage extends BaseMessage {
+  type: 'partyEffect'; // only celebrate
+}
+
 export interface GetNearbyElementsMessage extends BaseMessage {
   type: 'getNearbyElements';
   payload: {
@@ -50,5 +56,3 @@ export interface KeyBoardPressMessage extends BaseMessage {
     key: 'Enter' | 'Backspace' | 'Spacebar';
   };
 }
-
-export type Message = CaptureMessage | ChatMessage;

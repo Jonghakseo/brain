@@ -18,7 +18,8 @@
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
-    "@chrome-extension-boilerplate/shared": "workspace:*"
+    "@chrome-extension-boilerplate/shared": "workspace:*",
+    "party-js": "^2.2.0"
   },
   "devDependencies": {
     "@chrome-extension-boilerplate/hmr": "workspace:*",
