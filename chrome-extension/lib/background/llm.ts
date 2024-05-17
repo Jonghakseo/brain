@@ -1,12 +1,12 @@
 import OpenAI from 'openai';
 import {
   billingInfoStorage,
+  calculateImageFileSize,
   type Chat,
   conversationStorage,
+  LOADING_PLACEHOLDER,
   settingStorage,
   toolsStorage,
-  LOADING_PLACEHOLDER,
-  calculateImageFileSize,
 } from '@chrome-extension-boilerplate/shared';
 import type {
   ChatCompletion,
@@ -18,16 +18,14 @@ import type {
 import {
   billingTools,
   etcTools,
-  settingTools,
-  urlTools,
   screenTools,
-  // domTools,
+  searchTools,
+  settingTools,
   tabsTools,
+  urlTools,
 } from '@lib/background/tools';
 import { RunnableTools } from 'openai/lib/RunnableFunction';
 import { Screen } from '@lib/background/program/Screen';
-
-type ChatWithoutCreatedAt = Omit<Chat, 'createdAt'>;
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const ALL_TOOLS: RunnableTools<any[]> = [
@@ -40,6 +38,10 @@ const ALL_TOOLS: RunnableTools<any[]> = [
   // TODO: this function is unstable
   // ...domTools,
 ];
+
+const camelCaseToSentence = (camelCase: string) => {
+  return camelCase.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase());
+};
 
 chrome.runtime.onInstalled.addListener(() => {
   const addCategoryIntoTools =
@@ -54,9 +56,9 @@ chrome.runtime.onInstalled.addListener(() => {
     ...addCategoryIntoTools(urlTools)('url'),
     ...addCategoryIntoTools(tabsTools)('tabs'),
     ...addCategoryIntoTools(screenTools)('screen'),
+    ...addCategoryIntoTools(searchTools)('search'),
     ...addCategoryIntoTools(etcTools)('etc'),
     ...addCategoryIntoTools(billingTools)('etc'),
-
     // ...addCategoryIntoTools(domTools)('dom'),
   ]);
 });
@@ -73,26 +75,30 @@ export class LLM {
     this.client = new OpenAI({ apiKey: key });
   }
 
-  private async setUsage(usage: ChatCompletion['usage']) {
+  private async saveUsage(usage: ChatCompletion['usage']) {
     const { completion_tokens, prompt_tokens } = usage ?? {};
     prompt_tokens && (await billingInfoStorage.addInputTokens(prompt_tokens));
     completion_tokens && (await billingInfoStorage.addOutputTokens(completion_tokens));
   }
 
-  private convertChatToOpenAIFormat(
-    chat: ChatWithoutCreatedAt,
-  ): ChatCompletionAssistantMessageParam | ChatCompletionUserMessageParam {
+  private makeUserChat(content: Chat['content']) {
+    return { type: 'user', content, createdAt: Date.now() };
+  }
+
+  private convertChatToOpenAIFormat(chat: Chat): ChatCompletionAssistantMessageParam | ChatCompletionUserMessageParam {
     if (chat.type === 'user') {
       const content: ChatCompletionUserMessageParam['content'] = [];
       if (chat.content.text) {
         content.push({ type: 'text', text: chat.content.text });
       }
       if (chat.content.image) {
-        content.push({
-          type: 'text',
-          text: `This Image's width:${chat.content.image.w} height:${chat.content.image.h}`,
-        });
         content.push({ type: 'image_url', image_url: { url: chat.content.image.base64 } });
+        if (chat.content.image.w && chat.content.image.h) {
+          content.push({
+            type: 'text',
+            text: `This Image's width:${chat.content.image.w} height:${chat.content.image.h}`,
+          });
+        }
       }
       return { role: 'user', content };
     }
@@ -127,7 +133,11 @@ export class LLM {
       })
       .on('connect', async () => {})
       .on('functionCall', functionCall => {
-        conversationStorage.updateAIChat(createdAt, text + LOADING_PLACEHOLDER);
+        const functionName = camelCaseToSentence(functionCall.name);
+        conversationStorage.updateAIChat(
+          createdAt,
+          text ? `${text}\n${functionName}...` : functionName + '  ' + LOADING_PLACEHOLDER,
+        );
         console.log('functionCall', functionCall);
         if (functionCall.name === 'captureRequest') {
           this.scheduleScreenCaptureMessage();
@@ -137,7 +147,7 @@ export class LLM {
       .on('message', message => console.log('message', message))
       .on('error', error => {
         stream.abort();
-        throw error;
+        console.error(error);
       })
       .on('content', content => {
         text += content;
@@ -147,7 +157,7 @@ export class LLM {
     const result = await stream.finalChatCompletion();
 
     if (result.usage) {
-      void this.setUsage(result.usage);
+      void this.saveUsage(result.usage);
     }
 
     return {
@@ -172,23 +182,15 @@ export class LLM {
   }
 
   async chatCompletion(chatContent: Chat['content']) {
-    return this.createChatCompletion([this.convertChatToOpenAIFormat({ type: 'user', content: chatContent })]);
+    const message = this.convertChatToOpenAIFormat(this.makeUserChat(chatContent));
+    return this.createChatCompletion([message]);
   }
 
   async chatCompletionWithHistory(chatContent: Chat['content'], history: Chat[]) {
-    const historyMessages = history.map(chat => {
-      return this.convertChatToOpenAIFormat(chat);
-    });
+    const historyMessages = history.map(this.convertChatToOpenAIFormat);
+    const newMessage = this.convertChatToOpenAIFormat(this.makeUserChat(chatContent));
+    await this.createChatCompletion([...historyMessages, newMessage]);
 
-    const messages = [...historyMessages, this.convertChatToOpenAIFormat({ type: 'user', content: chatContent })];
-
-    const res = await this.createChatCompletion(messages);
-
-    await this.flushScheduledMessageContent([
-      ...history,
-      { type: 'user', content: chatContent, createdAt: res.createdAt },
-    ]);
-
-    return res;
+    await this.flushScheduledMessageContent([...history, this.makeUserChat(chatContent)]);
   }
 }

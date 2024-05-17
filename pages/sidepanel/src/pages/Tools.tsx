@@ -22,7 +22,7 @@ export default function Tools() {
       <Typography as="h1" className="text-2xl font-semibold">
         Tools
       </Typography>
-      <article className="flex flex-col gap-4 overflow-y-scroll">
+      <article className="flex flex-col gap-4">
         {Object.entries(toolsByCategory).map(([category, tools]) => {
           return (
             <Fragment key={category}>

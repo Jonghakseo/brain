@@ -48,7 +48,7 @@ export default function ChatBox({ className = '', image, text }: ChatBoxProps) {
               return (
                 <p {...rest}>
                   {before}
-                  <Spinner color="indigo" className="h-4 w-4" />
+                  <Spinner color="indigo" className="h-4 w-4 inline" />
                   {after}
                 </p>
               );

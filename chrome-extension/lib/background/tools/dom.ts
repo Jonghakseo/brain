@@ -2,13 +2,12 @@ import { zodFunction } from '@lib/background/tools/zodFunction';
 import { z } from 'zod';
 import {
   ClickElementMessage,
+  delay,
   GetNearbyElementsMessage,
   KeyBoardPressMessage,
   TypeInputMessage,
 } from '@chrome-extension-boilerplate/shared';
 import { getCurrentTab } from '@lib/background/tools/getCurrentTab';
-
-const delay = async (ms: number) => new Promise<void>(resolve => setTimeout(resolve, ms));
 
 const GetInteractiveElementsNearbyPointParams = z.object({
   x: z.number(),

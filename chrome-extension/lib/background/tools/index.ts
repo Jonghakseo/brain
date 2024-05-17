@@ -4,5 +4,6 @@ export * from './settings';
 export * from './url';
 export * from './tabs';
 export * from './screen';
+export * from './search';
 export * from './dom';
 export * from './etc';

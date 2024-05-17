@@ -25,6 +25,7 @@ const manifest = {
     'scripting',
     'tabs',
     'tabGroups',
+    'search',
   ],
   host_permissions: ['<all_urls>'],
   side_panel: {

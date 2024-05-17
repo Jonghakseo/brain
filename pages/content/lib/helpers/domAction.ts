@@ -1,9 +1,9 @@
+import { delay } from '@chrome-extension-boilerplate/shared';
+
 const DELAY = {
   CLICK: 300, // Set this value to control the delay between clicks
   KEYSTROKE: 100, // Set this value to control typing speed
 };
-
-const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 async function clickEvent(element: HTMLElement) {
   element.scrollIntoView({ behavior: 'smooth', block: 'center' });

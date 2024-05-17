@@ -15,6 +15,7 @@ type ChatSendAreaProps = {
 
 function ChatSendArea({ onSend, loading }: ChatSendAreaProps) {
   const formRef = useRef<HTMLFormElement>(null);
+  const loadingRef = useRef(false);
   const [imageUrl, setImageUrl] = useState<string | undefined>(undefined);
   const [text, setText] = useState('');
   const { extensionConfig } = useStorage(settingStorage);
@@ -44,17 +45,24 @@ function ChatSendArea({ onSend, loading }: ChatSendAreaProps) {
   };
 
   const sendMessage = async () => {
-    const base64 = autoCapture ? await sendToBackground('ScreenCapture') : imageUrl;
-    if (base64) {
-      const kb = calculateImageFileSize(base64);
-      const { width: w, height: h } = await calculateImageSize(base64);
-      onSend({ text, image: { base64, kb, w, h } });
-    } else {
-      onSend({ text });
+    if (loadingRef.current) {
+      return;
     }
-
-    setText('');
-    resetImage();
+    loadingRef.current = true;
+    try {
+      const base64 = autoCapture ? await sendToBackground('ScreenCapture') : imageUrl;
+      if (base64) {
+        const kb = calculateImageFileSize(base64);
+        const { width: w, height: h } = await calculateImageSize(base64);
+        onSend({ text, image: { base64, kb, w, h } });
+      } else {
+        onSend({ text });
+      }
+    } finally {
+      loadingRef.current = false;
+      setText('');
+      resetImage();
+    }
   };
 
   return (

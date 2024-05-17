@@ -44,7 +44,8 @@ async function getCurrentTabInfo() {
 }
 
 const NavigateTabParams = z.object({
-  action: z.enum(['goBack', 'goForward', 'move', 'reload']),
+  action: z.enum(['goBack', 'goForward', 'move', 'reload', 'focus']),
+  tabId: z.number().optional(),
   url: z.string().optional(),
 });
 
@@ -69,15 +70,25 @@ async function navigateTab(params: z.infer<typeof NavigateTabParams>) {
         if (!params.url) {
           return { success: false, reason: 'url is required' };
         }
-        await chrome.scripting.executeScript({
-          target: { tabId: tab.id },
-          func: moveTab,
-          args: [params.url],
-        });
+        try {
+          await chrome.scripting.executeScript({
+            target: { tabId: tab.id },
+            func: moveTab,
+            args: [params.url],
+          });
+        } catch {
+          await chrome.tabs.create({ url: params.url });
+        }
         break;
       }
       case 'reload':
         await chrome.tabs.reload();
+        break;
+      case 'focus':
+        if (!params.tabId) {
+          return { success: false, reason: 'tabId is required' };
+        }
+        await chrome.tabs.update(params.tabId, { active: true });
         break;
     }
     return { success: true };
@@ -187,7 +198,7 @@ export const tabsTools = [
   zodFunction({
     function: navigateTab,
     schema: NavigateTabParams,
-    description: 'Navigate the current tab. (goBack, goForward, move, reload)',
+    description: 'Navigate the current tab. (goBack, goForward, move, reload, focus)',
   }),
   zodFunction({
     function: tabGroup,
