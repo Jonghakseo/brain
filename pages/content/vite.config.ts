@@ -25,7 +25,7 @@ export default defineConfig({
     },
     outDir: resolve(rootDir, '..', '..', 'dist', 'content'),
     sourcemap: isDev,
-    minify: isProduction,
+    minify: false,
     reportCompressedSize: isProduction,
     modulePreload: true,
     rollupOptions: {

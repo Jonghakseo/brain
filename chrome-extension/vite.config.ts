@@ -39,7 +39,7 @@ export default defineConfig({
     },
     outDir,
     sourcemap: isDev,
-    minify: isProduction,
+    minify: false,
     reportCompressedSize: isProduction,
     modulePreload: true,
     rollupOptions: {

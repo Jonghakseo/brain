@@ -21,7 +21,7 @@ export default defineConfig({
   build: {
     outDir: resolve(rootDir, '..', '..', 'dist', 'sidepanel'),
     sourcemap: false,
-    minify: isProduction,
+    minify: false,
     reportCompressedSize: isProduction,
     rollupOptions: {
       external: ['chrome'],

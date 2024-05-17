@@ -8,8 +8,12 @@ async function partyFirecrackers() {
   if (!tab?.id) {
     return { success: false };
   }
-  await chrome.tabs.sendMessage(tab.id, { type: 'partyEffect' } as PartyEffectMessage);
-  return { success: true };
+  try {
+    return await chrome.tabs.sendMessage(tab.id, { type: 'partyEffect' } as PartyEffectMessage);
+  } catch (e) {
+    console.error(e);
+    return { success: false };
+  }
 }
 export const etcTools = [
   zodFunction({
