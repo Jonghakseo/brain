@@ -8,10 +8,11 @@ export class ToolSelector extends BaseLLM {
   constructor(key: string) {
     super(key);
     this.toolChoice = 'required';
+    this.model = 'gpt-3.5-turbo-0125';
     this.setConfig({
       temperature: 0.2,
       topP: 1,
-      maxTokens: 200,
+      maxTokens: 3000,
       frequencyPenalty: 0,
       presencePenalty: 0,
       systemPrompt: 'You are a tool selector assistant.',
@@ -60,7 +61,7 @@ export class ToolSelector extends BaseLLM {
     ];
 
     const res = await this.createChatCompletionWithTools([
-      ...messages.slice(-5),
+      ...messages.slice(-10),
       {
         role: 'user',
         content:

@@ -110,7 +110,7 @@ export default function Setting() {
             }}
           />
           <Switch
-            label="Auto Tool Section"
+            label="Auto Tool Section (GPT-3.5 Turbo)"
             checked={extensionConfig.autoToolSelection}
             onChange={e => {
               settingStorage.updateExtensionConfig('autoToolSelection', e.currentTarget.checked);
