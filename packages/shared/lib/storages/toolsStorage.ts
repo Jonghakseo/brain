@@ -18,6 +18,7 @@ type ToolsStorage = BaseStorage<Tools> & {
   getTools: () => Promise<Tools>;
   getActivatedTools: () => Promise<Tools>;
   deactivateAllTools: () => Promise<void>;
+  toggleAllByCategory: (category: string) => Promise<void>;
 };
 
 const storage = createStorage<Tools>('tools-storage-key', [], {
@@ -70,6 +71,16 @@ export const toolsStorage: ToolsStorage = {
     await storage.set(prev => {
       return prev.map(t => {
         return { ...t, isActivated: false };
+      });
+    });
+  },
+  toggleAllByCategory: async category => {
+    await storage.set(prev => {
+      return prev.map(t => {
+        if (t.category === category) {
+          return { ...t, isActivated: !t.isActivated };
+        }
+        return t;
       });
     });
   },

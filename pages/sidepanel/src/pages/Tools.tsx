@@ -22,13 +22,21 @@ export default function Tools() {
       <Typography as="h1" className="text-2xl font-semibold">
         Tools
       </Typography>
-      <article className="flex flex-col gap-4 mt-4">
+      <article className="flex flex-col gap-2 mt-4">
         {Object.entries(toolsByCategory).map(([category, tools]) => {
           return (
             <Fragment key={category}>
-              <Typography as="h2" className="text-lg font-semibold">
-                {category}
-              </Typography>
+              <div className="flex justify-between">
+                <Typography as="h2" className="text-lg font-semibold mt-2">
+                  {category}
+                </Typography>
+                <Switch
+                  label="Toggle All"
+                  checked={tools.every(tool => tool.isActivated)}
+                  onChange={() => toolsStorage.toggleAllByCategory(category)}
+                />
+              </div>
+              <hr />
               <section className="grid grid-cols-2 gap-2">
                 {tools.map(tool => {
                   return (
