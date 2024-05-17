@@ -30,26 +30,24 @@ export const billingInfoStorage: BillingInfoStorage = {
     await storage.set({ totalPrice: 0, totalToken: 0, tokenUsageInfo: { input: 0, output: 0 } });
   },
   addInputTokens: async tokens => {
-    const billingInfo = await storage.get();
-    await storage.set({
-      totalPrice: billingInfo.totalPrice + calculateInputTokenPrice(tokens),
-      totalToken: billingInfo.totalToken + tokens,
+    await storage.set(prev => ({
+      totalPrice: prev.totalPrice + calculateInputTokenPrice(tokens),
+      totalToken: prev.totalToken + tokens,
       tokenUsageInfo: {
-        ...billingInfo.tokenUsageInfo,
-        input: billingInfo.tokenUsageInfo.input + tokens,
+        ...prev.tokenUsageInfo,
+        input: prev.tokenUsageInfo.input + tokens,
       },
-    });
+    }));
   },
   addOutputTokens: async tokens => {
-    const billingInfo = await storage.get();
-    await storage.set({
-      totalPrice: billingInfo.totalPrice + calculateOutputTokenPrice(tokens),
-      totalToken: billingInfo.totalToken + tokens,
+    await storage.set(prev => ({
+      totalPrice: prev.totalPrice + calculateOutputTokenPrice(tokens),
+      totalToken: prev.totalToken + tokens,
       tokenUsageInfo: {
-        ...billingInfo.tokenUsageInfo,
-        output: billingInfo.tokenUsageInfo.output + tokens,
+        ...prev.tokenUsageInfo,
+        output: prev.tokenUsageInfo.output + tokens,
       },
-    });
+    }));
   },
 };
 

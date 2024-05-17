@@ -22,4 +22,4 @@ export default function Billing() {
 }
 
 const numberWithCurrency = Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format;
-const numberWithCommas = Intl.NumberFormat('en-US', { maximumSignificantDigits: 3 }).format;
+const numberWithCommas = Intl.NumberFormat('en-US').format;
