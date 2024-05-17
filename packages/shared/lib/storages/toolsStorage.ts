@@ -1,6 +1,7 @@
 import { BaseStorage, createStorage, StorageType } from './base';
 
 type Tool = {
+  category?: string;
   name: string;
   description: string;
   isActivated: boolean;
@@ -10,7 +11,7 @@ type Tools = Tool[];
 
 type ToolsStorage = BaseStorage<Tools> & {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  registerTools: (zodFunctions: any[]) => Promise<void>;
+  registerTools: (maybeZodFunctions: any[]) => Promise<void>;
   activateTool: (name: string) => Promise<void>;
   deactivateTool: (name: string) => Promise<void>;
   hasTool: (name: string) => Promise<boolean>;
@@ -25,10 +26,11 @@ const storage = createStorage<Tools>('tools-storage-key', [], {
 
 export const toolsStorage: ToolsStorage = {
   ...storage,
-  registerTools: async zodFunctions => {
-    const tools: Tools = zodFunctions.map(zodFunction => ({
+  registerTools: async maybeZodFunctions => {
+    const tools: Tools = maybeZodFunctions.map(maybeZodFunction => ({
       // openai RunnableToolFunction
-      ...zodFunction.function,
+      ...maybeZodFunction.function,
+      category: maybeZodFunction.category,
       isActivated: true,
     }));
     await storage.set(tools);

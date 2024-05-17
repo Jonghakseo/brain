@@ -1,6 +1,7 @@
 import { List, ListItem, Typography } from '@material-tailwind/react';
 import { ReactNode } from 'react';
 import { useLocation } from 'react-router';
+import { routeObjects } from '@src/router';
 
 type LayoutProps = {
   children: ReactNode;
@@ -9,11 +10,13 @@ type LayoutProps = {
 export default function Layout({ children }: LayoutProps) {
   const { pathname } = useLocation();
 
-  const listItems = [
-    { name: 'Chat', href: '#', isActive: pathname === '/' },
-    { name: 'Billing', href: '#billing', isActive: pathname === '/billing' },
-    { name: 'Setting', href: '#setting', isActive: pathname === '/setting' },
-  ];
+  const listItems = routeObjects.map(routeObject => {
+    const { path: _path } = routeObject;
+    const name = _path === '/' ? 'Chat' : _path.slice(1).charAt(0).toUpperCase() + _path.slice(2);
+    const path = _path.replace('/', '#');
+
+    return { name, href: path, isActive: pathname === _path };
+  });
 
   return (
     <main className="flex flex-col w-full h-full max-h-full max-w-full p-4 gap-2">

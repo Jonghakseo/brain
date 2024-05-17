@@ -15,7 +15,15 @@ import type {
   ChatCompletionSystemMessageParam,
   ChatCompletionUserMessageParam,
 } from 'openai/resources';
-import { billingTools, etcTools, settingTools, urlTools, screenTools } from '@lib/background/tools';
+import {
+  billingTools,
+  etcTools,
+  settingTools,
+  urlTools,
+  screenTools,
+  // domTools,
+  tabsTools,
+} from '@lib/background/tools';
 import { RunnableTools } from 'openai/lib/RunnableFunction';
 import { Screen } from '@lib/background/program/Screen';
 
@@ -28,14 +36,29 @@ const ALL_TOOLS: RunnableTools<any[]> = [
   ...urlTools,
   ...screenTools,
   ...etcTools,
+  ...tabsTools,
   // TODO: this function is unstable
-  // ...domTools
+  // ...domTools,
 ];
 
 chrome.runtime.onInstalled.addListener(() => {
-  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-ignore
-  void toolsStorage.registerTools(ALL_TOOLS);
+  const addCategoryIntoTools =
+    <T>(tools: T[]) =>
+    (categoryName: string) => {
+      return tools.map(tool => ({ ...tool, category: categoryName })) as T & { category: string }[];
+    };
+
+  // Resister all tools when the extension is installed
+  void toolsStorage.registerTools([
+    ...addCategoryIntoTools(settingTools)('setting'),
+    ...addCategoryIntoTools(urlTools)('url'),
+    ...addCategoryIntoTools(tabsTools)('tabs'),
+    ...addCategoryIntoTools(screenTools)('screen'),
+    ...addCategoryIntoTools(etcTools)('etc'),
+    ...addCategoryIntoTools(billingTools)('etc'),
+
+    // ...addCategoryIntoTools(domTools)('dom'),
+  ]);
 });
 
 export class LLM {

@@ -1,10 +1,9 @@
 import Layout from '@src/components/Layout';
 import { Input, Switch, Textarea, Typography } from '@material-tailwind/react';
-import { settingStorage, toolsStorage, useStorage } from '@chrome-extension-boilerplate/shared';
+import { settingStorage, useStorage } from '@chrome-extension-boilerplate/shared';
 
 export default function Setting() {
   const { openaiConfig, extensionConfig } = useStorage(settingStorage);
-  const tools = useStorage(toolsStorage);
   return (
     <Layout>
       <Typography as="h1" className="text-2xl font-semibold">
@@ -110,26 +109,6 @@ export default function Setting() {
               settingStorage.updateExtensionConfig('autoCapture', e.currentTarget.checked);
             }}
           />
-
-          <Typography as="h2" className="text-xl font-semibold mt-4">
-            Tools
-          </Typography>
-          {tools.map(tool => {
-            return (
-              <Switch
-                key={tool.name}
-                label={tool.name}
-                checked={tool.isActivated}
-                onChange={e => {
-                  if (e.target.checked) {
-                    void toolsStorage.activateTool(tool.name);
-                  } else {
-                    void toolsStorage.deactivateTool(tool.name);
-                  }
-                }}
-              />
-            );
-          })}
         </div>
       </section>
     </Layout>

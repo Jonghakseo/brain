@@ -1,28 +1,5 @@
 import { z } from 'zod';
 import { zodFunction } from './zodFunction';
-import { getCurrentTab } from '@lib/background/tools/getCurrentTab';
-
-async function getCurrentUrlWithTitle() {
-  const tab = await getCurrentTab();
-  return { url: tab?.url, title: tab?.title };
-}
-
-const MoveCurrentTabUrlParams = z.object({
-  url: z.string().url(),
-  isNewTab: z.boolean().optional(),
-});
-
-async function moveCurrentTabUrl({ url, isNewTab = false }: z.infer<typeof MoveCurrentTabUrlParams>) {
-  const tab = await getCurrentTab();
-  if (!tab?.id) {
-    await chrome.tabs.create({ url });
-  } else if (isNewTab) {
-    await chrome.tabs.create({ url });
-  } else {
-    await chrome.tabs.update(tab.id, { url });
-  }
-  return { url };
-}
 
 type BookmarkNode = {
   url: string;
@@ -76,16 +53,6 @@ async function getMostVisitedUrls() {
 }
 
 export const urlTools = [
-  zodFunction({
-    function: getCurrentUrlWithTitle,
-    schema: z.object({}),
-    description: 'Get current tab url & title',
-  }),
-  zodFunction({
-    function: moveCurrentTabUrl,
-    schema: MoveCurrentTabUrlParams,
-    description: 'Move current tab to a new url',
-  }),
   zodFunction({
     function: getMyBookmarks,
     schema: z.object({}),

@@ -3,6 +3,8 @@ import { RunnableToolFunctionWithParse } from 'openai/lib/RunnableFunction';
 import { zodToJsonSchema } from 'zod-to-json-schema';
 import { JSONSchema } from 'openai/lib/jsonschema';
 
+const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
 /**
  * A generic utility function that returns a RunnableFunction
  * you can pass to `.runTools()`,
@@ -24,7 +26,13 @@ export function zodFunction<T extends object>({
   return {
     type: 'function',
     function: {
-      function: fn,
+      function: async (args, runner) => {
+        // Add a small delay prevent concurrent issues
+        await delay(50);
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-ignore
+        return fn(args, runner);
+      },
       name: name ?? fn.name,
       description,
       parameters: zodToJsonSchema(schema) as JSONSchema,
