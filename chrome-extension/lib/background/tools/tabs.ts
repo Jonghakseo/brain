@@ -37,10 +37,12 @@ async function getTabsInfo(params: z.infer<typeof GetTabsInfoParams>) {
 async function getCurrentTabInfo() {
   const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
   const activeTab = tabs.at(0);
-  if (!activeTab) {
-    throw new Error('Tab not found');
+
+  if (activeTab?.id) {
+    return convertTabToTabInfo(activeTab);
+  } else {
+    return undefined;
   }
-  return convertTabToTabInfo(activeTab);
 }
 
 const NavigateTabParams = z.object({
@@ -63,16 +65,13 @@ async function navigateTab(params: z.infer<typeof NavigateTabParams>) {
         await chrome.tabs.goForward();
         break;
       case 'move': {
-        const tab = await getCurrentTabInfo();
-        if (!tab.id) {
-          return { success: false, reason: 'Current Tab id not found' };
-        }
         if (!params.url) {
           return { success: false, reason: 'url is required' };
         }
+        const tab = await getCurrentTabInfo();
         try {
           await chrome.scripting.executeScript({
-            target: { tabId: tab.id },
+            target: { tabId: tab?.id ?? params.tabId },
             func: moveTab,
             args: [params.url],
           });
@@ -188,11 +187,11 @@ export const tabsTools = [
   zodFunction({
     name: 'getCurrentTabInfo',
     function: async () => {
-      try {
-        return await getCurrentTabInfo();
-      } catch (e) {
-        return { success: false, reason: (e as Error).message };
+      const tab = await getCurrentTabInfo();
+      if (!tab) {
+        return { success: false, reason: 'Tab not found' };
       }
+      return tab;
     },
     schema: z.object({}),
     description: 'Get the current tab information. (like url, title, tabId, etc.)',

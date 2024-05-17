@@ -57,7 +57,6 @@ export class ToolSelector extends BaseLLM {
           'Is the last chat from me a request? If so, PLEASE! PICK! the best tools to handle that request. OR NOT, JUST ANSWER "NO"',
       },
     ]);
-    await toolsStorage.activateTool('getCurrentTabInfo');
     console.log(res);
     console.log('Selected Tools: ', await toolsStorage.getActivatedTools());
   }

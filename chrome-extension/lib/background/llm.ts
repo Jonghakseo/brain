@@ -54,7 +54,7 @@ chrome.runtime.onInstalled.addListener(() => {
     ...addCategoryIntoTools(tabsTools)('Tab Manage & Navigation'),
     ...addCategoryIntoTools(screenTools)('Search & Screen Capture'),
     ...addCategoryIntoTools(searchTools)('Search & Screen Capture'),
-    ...addCategoryIntoTools(etcTools)('funny tools'),
+    ...addCategoryIntoTools(etcTools)('Funny tools'),
     ...addCategoryIntoTools(billingTools)('OpenAI Usage'),
     // ...addCategoryIntoTools(domTools)('dom'),
   ]);
@@ -110,7 +110,11 @@ export class LLM extends BaseLLM {
       }
     }
 
-    const activateTools = await toolsStorage.getActivatedTools();
+    let activateTools = await toolsStorage.getActivatedTools();
+    if (activateTools.length === 0) {
+      await toolsStorage.activateTool('getMyTools');
+      activateTools = await toolsStorage.getActivatedTools();
+    }
     this.tools = ALL_TOOLS.filter(tool => activateTools.some(activateTool => activateTool.name === tool.function.name));
 
     let text = '';

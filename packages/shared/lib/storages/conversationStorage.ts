@@ -13,6 +13,7 @@ type ConversationStorage = BaseStorage<Conversation> & {
   saveUserChat: (content: Chat['content']) => Promise<void>;
   startAIChat: () => Promise<number>;
   updateAIChat: (createAt: number, text: string) => Promise<void>;
+  updateLastAIChat: (text: string | ((prev: string) => string)) => Promise<void>;
   reset: () => Promise<void>;
 };
 
@@ -57,5 +58,28 @@ export const conversationStorage: ConversationStorage = {
   },
   reset: async () => {
     await storage.set({ chats: [] });
+  },
+  updateLastAIChat: async textOrUpdate => {
+    await storage.set(prev => {
+      const lastAIChatIndex = prev.chats
+        .map((chat, index) => ({ chat, index }))
+        .filter(({ chat }) => chat.type === 'ai')
+        .map(({ index }) => index)
+        .pop();
+      if (lastAIChatIndex === undefined) {
+        return prev;
+      }
+      const lastAIChat = prev.chats[lastAIChatIndex];
+      const updatedText =
+        typeof textOrUpdate === 'function' ? textOrUpdate(lastAIChat.content.text ?? '') : textOrUpdate;
+      return {
+        ...prev,
+        chats: [
+          ...prev.chats.slice(0, lastAIChatIndex),
+          { ...lastAIChat, content: { text: updatedText } },
+          ...prev.chats.slice(lastAIChatIndex + 1),
+        ],
+      };
+    });
   },
 };

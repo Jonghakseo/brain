@@ -30,14 +30,14 @@ const getMyTools = async () => {
 };
 
 const ToggleToolsActivationParams = z.object({
-  toolNames: z.array(z.string()),
+  toolNames: z.array(z.string()).min(1),
   isActive: z.boolean(),
 });
 
 const toggleToolsActivation = async (params: z.infer<typeof ToggleToolsActivationParams>) => {
   try {
     for (const name of params.toolNames) {
-      if (param.isActive) {
+      if (params.isActive) {
         await toolsStorage.activateTool(name);
       } else {
         await toolsStorage.deactivateTool(name);
