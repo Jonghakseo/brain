@@ -1,6 +1,9 @@
 import { BaseStorage, createStorage, StorageType } from './base';
 import { Chat } from '../message';
 
+export type ConversationLoadingPlaceholder = '++LOADING++';
+export const LOADING_PLACEHOLDER: ConversationLoadingPlaceholder = '++LOADING++';
+
 type Conversation = {
   chats: Chat[];
 };
@@ -36,7 +39,7 @@ export const conversationStorage: ConversationStorage = {
     const createdAt = Date.now();
     await storage.set(prev => ({
       ...prev,
-      chats: [...prev.chats, { type: 'ai', createdAt, content: { text: '' } }],
+      chats: [...prev.chats, { type: 'ai', createdAt, content: { text: LOADING_PLACEHOLDER } }],
     }));
     return createdAt;
   },

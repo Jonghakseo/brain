@@ -17,7 +17,7 @@ export interface ChatMessage extends BaseMessage {
     content: Chat['content'];
     history?: Chat[];
   };
-  response: string;
+  response: null;
 }
 
 export type Message = CaptureMessage | ChatMessage;

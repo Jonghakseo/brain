@@ -32,18 +32,13 @@ chrome.runtime.onConnect.addListener(port => {
         }
         case 'Chat': {
           const llm = new LLM(process.env.OPENAI_KEY as string);
-          const response = await (() => {
-            if (message.payload.history) {
-              return llm.chatCompletionWithHistory(message.payload.content, message.payload.history);
-            } else {
-              return llm.chatCompletion(message.payload.content);
-            }
-          })();
-
-          if (!response) {
-            throw new Error('No response from AI');
+          if (message.payload.history) {
+            await llm.chatCompletionWithHistory(message.payload.content, message.payload.history);
+          } else {
+            await llm.chatCompletion(message.payload.content);
           }
-          sendResponse({ type: 'Chat', response });
+
+          sendResponse({ type: 'Chat', response: null });
         }
       }
     } catch (e) {

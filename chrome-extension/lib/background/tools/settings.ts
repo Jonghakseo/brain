@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { zodFunction } from './zodFunction';
-import { settingStorage } from '@chrome-extension-boilerplate/shared';
+import { settingStorage, toolsStorage } from '@chrome-extension-boilerplate/shared';
 
 async function getOpenAIConfig() {
   const { openaiConfig } = await settingStorage.get();
@@ -25,7 +25,40 @@ async function updateOpenAIConfig(params: z.infer<typeof UpdateOpenAIConfigSchem
   return openaiConfig;
 }
 
+const getMyTools = async () => {
+  return toolsStorage.getTools();
+};
+
+const ToggleToolsActivationParamas = z.object({
+  toolName: z.string(),
+  isActive: z.boolean(),
+});
+
+const toggleToolsActivation = async (params: z.infer<typeof ToggleToolsActivationParamas>) => {
+  try {
+    if (params.isActive) {
+      await toolsStorage.activateTool(params.toolName);
+    } else {
+      await toolsStorage.deactivateTool(params.toolName);
+    }
+    return { success: true };
+  } catch (e) {
+    console.error(e);
+    return { success: false };
+  }
+};
+
 export const settingTools = [
+  zodFunction({
+    function: getMyTools,
+    schema: z.object({}),
+    description: 'Get all tools for this extension',
+  }),
+  zodFunction({
+    function: toggleToolsActivation,
+    schema: ToggleToolsActivationParamas,
+    description: 'Toggle activation of a tool',
+  }),
   zodFunction({
     function: getOpenAIConfig,
     schema: z.object({}),

@@ -4,6 +4,9 @@ import {
   type Chat,
   conversationStorage,
   settingStorage,
+  toolsStorage,
+  LOADING_PLACEHOLDER,
+  calculateImageFileSize,
 } from '@chrome-extension-boilerplate/shared';
 import type {
   ChatCompletion,
@@ -12,13 +15,35 @@ import type {
   ChatCompletionSystemMessageParam,
   ChatCompletionUserMessageParam,
 } from 'openai/resources';
-import { billingTools, etcTools, settingTools, urlTools } from '@lib/background/tools';
+import { billingTools, etcTools, settingTools, urlTools, screenTools } from '@lib/background/tools';
+import { RunnableTools } from 'openai/lib/RunnableFunction';
+import { Screen } from '@lib/background/program/Screen';
 
 type ChatWithoutCreatedAt = Omit<Chat, 'createdAt'>;
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const ALL_TOOLS: RunnableTools<any[]> = [
+  ...billingTools,
+  ...settingTools,
+  ...urlTools,
+  ...screenTools,
+  ...etcTools,
+  // TODO: this function is unstable
+  // ...domTools
+];
+
+chrome.runtime.onInstalled.addListener(() => {
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  // @ts-ignore
+  void toolsStorage.registerTools(ALL_TOOLS);
+});
 
 export class LLM {
   client: OpenAI;
   model: OpenAI.Chat.ChatModel;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  tools = ALL_TOOLS;
+  scheduledMessageContent: Chat['content'] | null = null;
 
   constructor(key: string) {
     this.model = 'gpt-4o-2024-05-13';
@@ -57,11 +82,13 @@ export class LLM {
     const { presencePenalty, frequencyPenalty, topP, temperature, maxTokens } = openaiConfig;
     let text = '';
     const createdAt = await conversationStorage.startAIChat();
+    const activateTools = await toolsStorage.getActivatedTools();
 
     const systemMessage: ChatCompletionSystemMessageParam = {
       role: 'system',
       content: openaiConfig.systemPrompt,
     };
+
     const stream = this.client.beta.chat.completions
       .runTools({
         model: this.model,
@@ -73,18 +100,17 @@ export class LLM {
         presence_penalty: presencePenalty,
         stream: true,
         stream_options: { include_usage: true },
-        tools: [
-          ...billingTools,
-          ...settingTools,
-          ...urlTools,
-          // TODO: this function is unstable
-          // ...domTools
-          ...etcTools,
-        ],
+        tools: this.tools.filter(tool => activateTools.some(activateTool => activateTool.name === tool.function.name)),
       })
       .on('connect', async () => {})
-      .on('functionCall', usage => console.log('functionCall', usage))
-      .on('functionCallResult', usage => console.log('functionCallResult', usage))
+      .on('functionCall', functionCall => {
+        conversationStorage.updateAIChat(createdAt, text + LOADING_PLACEHOLDER);
+        console.log('functionCall', functionCall);
+        if (functionCall.name === 'captureRequest') {
+          this.scheduleScreenCaptureMessage();
+        }
+      })
+      .on('functionCallResult', functionCallResult => console.log('functionCallResult', functionCallResult))
       .on('message', message => console.log('message', message))
       .on('error', error => {
         stream.abort();
@@ -97,22 +123,49 @@ export class LLM {
 
     const result = await stream.finalChatCompletion();
 
-    result.usage && this.setUsage(result.usage);
+    if (result.usage) {
+      void this.setUsage(result.usage);
+    }
 
-    return result.choices.at(0)?.message.content;
+    return {
+      createdAt,
+      content: result.choices.at(0)?.message.content,
+    };
+  }
+
+  async scheduleScreenCaptureMessage() {
+    const base64 = await Screen.capture();
+    const kb = calculateImageFileSize(base64);
+    this.scheduledMessageContent = { image: { base64, kb } };
+  }
+
+  async flushScheduledMessageContent(history: Chat[]) {
+    const messageContent = this.scheduledMessageContent;
+    this.scheduledMessageContent = null;
+    if (messageContent) {
+      await conversationStorage.saveUserChat(messageContent);
+      await this.chatCompletionWithHistory(messageContent, history);
+    }
   }
 
   async chatCompletion(chatContent: Chat['content']) {
     return this.createChatCompletion([this.convertChatToOpenAIFormat({ type: 'user', content: chatContent })]);
   }
+
   async chatCompletionWithHistory(chatContent: Chat['content'], history: Chat[]) {
-    const messages = history.map(chat => {
+    const historyMessages = history.map(chat => {
       return this.convertChatToOpenAIFormat(chat);
     });
 
-    return this.createChatCompletion([
-      ...messages,
-      this.convertChatToOpenAIFormat({ type: 'user', content: chatContent }),
+    const messages = [...historyMessages, this.convertChatToOpenAIFormat({ type: 'user', content: chatContent })];
+
+    const res = await this.createChatCompletion(messages);
+
+    await this.flushScheduledMessageContent([
+      ...history,
+      { type: 'user', content: chatContent, createdAt: res.createdAt },
     ]);
+
+    return res;
   }
 }

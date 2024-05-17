@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { Button, IconButton, Spinner } from '@material-tailwind/react';
 import ImageViewModal from '@src/components/ImageViewModal';
 import remarkGfm from 'remark-gfm';
-import { Chat } from '@chrome-extension-boilerplate/shared';
+import { Chat, LOADING_PLACEHOLDER } from '@chrome-extension-boilerplate/shared';
 
 type ChatBoxProps = {
   className?: string;
@@ -29,7 +29,6 @@ export default function ChatBox({ className = '', image, text }: ChatBoxProps) {
         </Button>
       )}
       {image && <ImageViewModal image={image} isOpen={isOpen} onClose={() => setIsOpen(false)} />}
-      {!image && !text && <Spinner color="indigo" className="h-5 w-5" />}
       <Markdown
         className="whitespace-normal max-w-full"
         remarkPlugins={[remarkGfm]}
@@ -40,6 +39,21 @@ export default function ChatBox({ className = '', image, text }: ChatBoxProps) {
                 {children}
               </a>
             );
+          },
+          // eslint-disable-next-line
+          p({ children, node, ...rest }) {
+            if (typeof children === 'string' && children.includes(LOADING_PLACEHOLDER)) {
+              // eslint-disable-next-line
+              const [before, _loading, after] = children.split(LOADING_PLACEHOLDER);
+              return (
+                <p {...rest}>
+                  {before}
+                  <Spinner color="indigo" className="h-4 w-4" />
+                  {after}
+                </p>
+              );
+            }
+            return <p {...rest}>{children}</p>;
           },
           code(props) {
             // eslint-disable-next-line
@@ -56,7 +70,7 @@ export default function ChatBox({ className = '', image, text }: ChatBoxProps) {
                 <CopyToClipboardIconButton copyText={String(children)} />
               </div>
             ) : (
-              <code {...rest} className={className}>
+              <code {...rest} className={`${className} whitespace-pre-wrap text-gray-800 rounded-sm bg-gray-200`}>
                 {children}
               </code>
             );
