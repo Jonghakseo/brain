@@ -16,6 +16,7 @@ export class BaseLLM {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   tools: RunnableTools<any[]> = [];
   toolChoice: 'required' | 'auto' = 'auto';
+  isJson = false;
 
   constructor(key: string) {
     this.model = 'gpt-4o-2024-05-13';
@@ -50,6 +51,9 @@ export class BaseLLM {
       presence_penalty: presencePenalty,
       tools: this.tools,
       tool_choice: this.toolChoice,
+      response_format: {
+        type: this.isJson ? 'json_object' : 'text',
+      },
     });
     runner
       .on('functionCall', functionCall => {
@@ -57,13 +61,13 @@ export class BaseLLM {
       })
       .on('functionCallResult', functionCallResult => {
         console.log('functionCallResult', functionCallResult);
+      })
+      .on('totalUsage', async usage => {
+        console.log('SAVE USAGE', usage);
+        await this.saveUsage(usage);
       });
+
     const result = await runner.finalChatCompletion();
-
-    if (result.usage) {
-      void this.saveUsage(result.usage);
-    }
-
     return result;
   }
 
@@ -106,6 +110,9 @@ export class BaseLLM {
         stream_options: { include_usage: true },
         tools: this.tools,
         tool_choice: this.toolChoice,
+        response_format: {
+          type: this.isJson ? 'json_object' : 'text',
+        },
       })
       .on('connect', () => {
         console.log('connected');

@@ -7,6 +7,11 @@ type BillingInfo = {
     input: number;
     output: number;
   };
+  requestCount: {
+    total: number;
+    input: number;
+    output: number;
+  };
 };
 
 type BillingInfoStorage = BaseStorage<BillingInfo> & {
@@ -16,18 +21,27 @@ type BillingInfoStorage = BaseStorage<BillingInfo> & {
 };
 
 const storage = createStorage<BillingInfo>(
-  'billing-storage-key',
-  { totalPrice: 0, totalToken: 0, tokenUsageInfo: { input: 0, output: 0 } },
+  'billing-storage',
+  {
+    totalPrice: 0,
+    totalToken: 0,
+    tokenUsageInfo: { input: 0, output: 0 },
+    requestCount: { total: 0, input: 0, output: 0 },
+  },
   {
     storageType: StorageType.Local,
     liveUpdate: true,
   },
 );
-
 export const billingInfoStorage: BillingInfoStorage = {
   ...storage,
   reset: async () => {
-    await storage.set({ totalPrice: 0, totalToken: 0, tokenUsageInfo: { input: 0, output: 0 } });
+    await storage.set({
+      totalPrice: 0,
+      totalToken: 0,
+      tokenUsageInfo: { input: 0, output: 0 },
+      requestCount: { total: 0, input: 0, output: 0 },
+    });
   },
   addInputTokens: async tokens => {
     await storage.set(prev => ({
@@ -36,6 +50,11 @@ export const billingInfoStorage: BillingInfoStorage = {
       tokenUsageInfo: {
         ...prev.tokenUsageInfo,
         input: prev.tokenUsageInfo.input + tokens,
+      },
+      requestCount: {
+        ...prev.requestCount,
+        total: prev.requestCount.total + 1,
+        input: prev.requestCount.input + 1,
       },
     }));
   },
@@ -46,6 +65,11 @@ export const billingInfoStorage: BillingInfoStorage = {
       tokenUsageInfo: {
         ...prev.tokenUsageInfo,
         output: prev.tokenUsageInfo.output + tokens,
+      },
+      requestCount: {
+        ...prev.requestCount,
+        total: prev.requestCount.total + 1,
+        output: prev.requestCount.output + 1,
       },
     }));
   },

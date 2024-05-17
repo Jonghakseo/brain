@@ -15,9 +15,6 @@ type ChatBoxProps = {
 export default function ChatBox({ className = '', image, text }: ChatBoxProps) {
   const [isOpen, setIsOpen] = useState(false);
 
-  // for fix markdown syntax highlighting bug
-  useForceRenderWhenMounted();
-
   return (
     <div className={`${className ?? ''} flex flex-row gap-2 relative`}>
       {image && (
@@ -30,7 +27,7 @@ export default function ChatBox({ className = '', image, text }: ChatBoxProps) {
       )}
       {image && <ImageViewModal image={image} isOpen={isOpen} onClose={() => setIsOpen(false)} />}
       <Markdown
-        className="whitespace-normal max-w-full"
+        className="whitespace-normal break-words max-w-full"
         remarkPlugins={[remarkGfm]}
         components={{
           a({ children, ...rest }) {
@@ -54,6 +51,13 @@ export default function ChatBox({ className = '', image, text }: ChatBoxProps) {
               );
             }
             return <p {...rest}>{children}</p>;
+          },
+          // eslint-disable-next-line
+          img({ src, alt, node, ...rest }) {
+            if (!src.startsWith('http')) {
+              return null;
+            }
+            return <img src={src} alt={alt} {...rest} />;
           },
           code(props) {
             // eslint-disable-next-line
@@ -81,13 +85,6 @@ export default function ChatBox({ className = '', image, text }: ChatBoxProps) {
     </div>
   );
 }
-
-const useForceRenderWhenMounted = () => {
-  const [, forceRender] = useState(0);
-  useEffect(() => {
-    forceRender(prev => prev + 1);
-  }, []);
-};
 
 function CopyToClipboardIconButton({ copyText }: { copyText: string }) {
   const copyToClipboard = () => {

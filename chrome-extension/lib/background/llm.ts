@@ -106,7 +106,7 @@ export class LLM extends BaseLLM {
         const selector = new ToolSelector(this.client.apiKey);
         await selector.selectTool(messages);
       } catch (e) {
-        console.warn('Error in autoToolSelection', e);
+        console.warn('Error in AutoToolSelection', e);
       }
     }
 

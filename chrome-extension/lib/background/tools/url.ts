@@ -19,7 +19,7 @@ async function getMyBookmarks() {
 }
 
 const GetHistoryParams = z.object({
-  recentDays: z.number().int().positive().max(7).optional(),
+  recentDays: z.number().int().positive().min(1).max(30).optional(),
   searchText: z.string().optional(),
 });
 
@@ -43,7 +43,12 @@ async function getHistory({ recentDays = 0, searchText = '' }: z.infer<typeof Ge
   // 방문 시간이 최근 순으로 정렬 후 상위 N 개만 반환
   return [...deduplicatedHistoryItems]
     .sort((a, b) => (b.lastVisitTime ?? 0) - (a.lastVisitTime ?? 0))
-    .map(history => ({ title: history.title, url: history.url }))
+    .map(history => ({
+      title: history.title,
+      url: history.url,
+      visitCount: history.visitCount,
+      lastVisitTime: history.lastVisitTime,
+    }))
     .slice(0, 20);
 }
 
