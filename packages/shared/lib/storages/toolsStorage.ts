@@ -17,6 +17,7 @@ type ToolsStorage = BaseStorage<Tools> & {
   hasTool: (name: string) => Promise<boolean>;
   getTools: () => Promise<Tools>;
   getActivatedTools: () => Promise<Tools>;
+  deactivateAllTools: () => Promise<void>;
 };
 
 const storage = createStorage<Tools>('tools-storage-key', [], {
@@ -64,5 +65,12 @@ export const toolsStorage: ToolsStorage = {
   hasTool: async name => {
     const tools = await storage.get();
     return tools.some(t => t.name === name);
+  },
+  deactivateAllTools: async () => {
+    await storage.set(prev => {
+      return prev.map(t => {
+        return { ...t, isActivated: false };
+      });
+    });
   },
 };

@@ -29,7 +29,7 @@ export default function Layout({ children }: LayoutProps) {
           </Typography>
         ))}
       </List>
-      <section className="grow max-h-[calc(100%-50px)]">{children}</section>
+      <section className="grow max-h-[calc(100%-62px)]">{children}</section>
     </main>
   );
 }

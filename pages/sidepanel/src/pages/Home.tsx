@@ -14,6 +14,7 @@ export default function Home() {
       await sendToBackground('Chat', { content, history });
     } catch (e) {
       console.warn(e);
+      console.warn(JSON.stringify(e));
     }
   }, []);
 

@@ -7,7 +7,7 @@ async function captureRequest() {
   if (!tab?.id) {
     return { status: 'fail', reason: 'No active tab' };
   }
-  return { status: 'success', message: 'Wait a second...' };
+  return { status: 'success', message: 'I will send you a screenshot. Please wait.' };
 }
 export const screenTools = [
   zodFunction({

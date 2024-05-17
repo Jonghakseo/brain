@@ -29,17 +29,19 @@ const getMyTools = async () => {
   return toolsStorage.getTools();
 };
 
-const ToggleToolsActivationParamas = z.object({
-  toolName: z.string(),
+const ToggleToolsActivationParams = z.object({
+  toolNames: z.array(z.string()),
   isActive: z.boolean(),
 });
 
-const toggleToolsActivation = async (params: z.infer<typeof ToggleToolsActivationParamas>) => {
+const toggleToolsActivation = async (params: z.infer<typeof ToggleToolsActivationParams>) => {
   try {
-    if (params.isActive) {
-      await toolsStorage.activateTool(params.toolName);
-    } else {
-      await toolsStorage.deactivateTool(params.toolName);
+    for (const name of params.toolNames) {
+      if (param.isActive) {
+        await toolsStorage.activateTool(name);
+      } else {
+        await toolsStorage.deactivateTool(name);
+      }
     }
     return { success: true };
   } catch (e) {
@@ -56,7 +58,7 @@ export const settingTools = [
   }),
   zodFunction({
     function: toggleToolsActivation,
-    schema: ToggleToolsActivationParamas,
+    schema: ToggleToolsActivationParams,
     description: 'Toggle activation of a tool',
   }),
   zodFunction({

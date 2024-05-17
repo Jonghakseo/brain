@@ -22,11 +22,11 @@ export default function Tools() {
       <Typography as="h1" className="text-2xl font-semibold">
         Tools
       </Typography>
-      <article className="flex flex-col gap-4">
+      <article className="flex flex-col gap-4 mt-4">
         {Object.entries(toolsByCategory).map(([category, tools]) => {
           return (
             <Fragment key={category}>
-              <Typography as="h2" className="text-xl font-semibold">
+              <Typography as="h2" className="text-lg font-semibold">
                 {category}
               </Typography>
               <section className="grid grid-cols-2 gap-2">

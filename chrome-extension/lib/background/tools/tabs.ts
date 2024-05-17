@@ -186,7 +186,14 @@ async function updateTabGroup(params: z.infer<typeof UpdateTabGroupParams>) {
 
 export const tabsTools = [
   zodFunction({
-    function: getCurrentTabInfo,
+    name: 'getCurrentTabInfo',
+    function: async () => {
+      try {
+        return await getCurrentTabInfo();
+      } catch (e) {
+        return { success: false, reason: (e as Error).message };
+      }
+    },
     schema: z.object({}),
     description: 'Get the current tab information. (like url, title, tabId, etc.)',
   }),

@@ -109,6 +109,13 @@ export default function Setting() {
               settingStorage.updateExtensionConfig('autoCapture', e.currentTarget.checked);
             }}
           />
+          <Switch
+            label="Auto Tool Section"
+            checked={extensionConfig.autoToolSelection}
+            onChange={e => {
+              settingStorage.updateExtensionConfig('autoToolSelection', e.currentTarget.checked);
+            }}
+          />
         </div>
       </section>
     </Layout>

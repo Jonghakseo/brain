@@ -7,6 +7,9 @@ type ImageViewModalProps = {
   onClose: () => void;
 };
 export default function ImageViewModal({ image, isOpen, onClose }: ImageViewModalProps) {
+  const imageDimensionText = image?.w && image.h ? `W:${image?.w} x H:${image?.h} - ` : '';
+  const imageSizeText = `SIZE:${image?.kb}KB`;
+  const imageInfoText = `${imageDimensionText}${imageSizeText}`;
   return createPortal(
     isOpen ? (
       // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
@@ -24,7 +27,7 @@ export default function ImageViewModal({ image, isOpen, onClose }: ImageViewModa
           className="relative p-4 w-full max-h-[80%] max-w-[80%] overflow-y-scroll bg-white rounded-lg shadow dark:bg-gray-700">
           <div className="relative">
             <div className="flex items-center justify-between p-0 border-b rounded-t dark:border-gray-600">
-              <h3 className="text-m font-semibold text-gray-900 dark:text-white">{`W:${image?.w} x H:${image?.h} - ${image?.kb}Kb`}</h3>
+              <h3 className="text-m font-semibold text-gray-900 dark:text-white">{imageInfoText}</h3>
               <button
                 type="button"
                 onClick={onClose}

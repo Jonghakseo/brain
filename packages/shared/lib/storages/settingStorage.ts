@@ -11,10 +11,13 @@ type Setting = {
   };
   extensionConfig: {
     autoCapture: boolean;
+    autoToolSelection: boolean;
     captureQuality: number;
     forgetChatAfter: number;
   };
 };
+
+export type OpenAIConfig = Setting['openaiConfig'];
 
 type ThemeStorage = BaseStorage<Setting> & {
   updateOpenAIConfig: <K extends keyof Setting['openaiConfig']>(
@@ -40,6 +43,7 @@ const storage = createStorage<Setting>(
     },
     extensionConfig: {
       autoCapture: false,
+      autoToolSelection: false,
       captureQuality: 25,
       forgetChatAfter: 10,
     },
