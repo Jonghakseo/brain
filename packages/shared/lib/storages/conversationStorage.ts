@@ -12,8 +12,9 @@ type ConversationStorage = BaseStorage<Conversation> & {
   save: (chat: Chat) => Promise<Chat[]>;
   saveUserChat: (content: Chat['content']) => Promise<void>;
   startAIChat: () => Promise<number>;
-  updateAIChat: (createAt: number, text: string) => Promise<void>;
+  updateAIChat: (createdAt: number, text: string) => Promise<void>;
   updateLastAIChat: (text: string | ((prev: string) => string)) => Promise<void>;
+  deleteChat: (createdAt: number) => Promise<void>;
   reset: () => Promise<void>;
 };
 
@@ -58,6 +59,12 @@ export const conversationStorage: ConversationStorage = {
   },
   reset: async () => {
     await storage.set({ chats: [] });
+  },
+  deleteChat: async createdAt => {
+    await storage.set(prev => ({
+      ...prev,
+      chats: prev.chats.filter(chat => chat.createdAt !== createdAt),
+    }));
   },
   updateLastAIChat: async textOrUpdate => {
     await storage.set(prev => {

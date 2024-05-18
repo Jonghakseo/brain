@@ -16,7 +16,7 @@ export default function Setting() {
           </Typography>
           <Textarea
             label="System Prompt"
-            value={openaiConfig.systemPrompt}
+            defaultValue={openaiConfig.systemPrompt}
             onChange={e => {
               settingStorage.updateOpenAIConfig('systemPrompt', e.target.value);
             }}
@@ -125,6 +125,13 @@ export default function Setting() {
             checked={extensionConfig.autoCapture}
             onChange={e => {
               settingStorage.updateExtensionConfig('autoCapture', e.currentTarget.checked);
+            }}
+          />
+          <Switch
+            label="Use Only Latest Image"
+            checked={extensionConfig.useLatestImage}
+            onChange={e => {
+              settingStorage.updateExtensionConfig('useLatestImage', e.currentTarget.checked);
             }}
           />
         </div>

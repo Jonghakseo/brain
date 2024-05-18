@@ -70,8 +70,78 @@ export class LLM extends BaseLLM {
     super(key);
   }
 
-  private makeUserChat(content: Chat['content']) {
-    return { type: 'user', content, createdAt: Date.now() };
+  async chatCompletion(chatContent: Chat['content']) {
+    const message = this.convertChatToOpenAIFormat(makeUserChat(chatContent));
+    return this.createChatCompletionStream([message]);
+  }
+
+  async chatCompletionWithHistory(chatContent: Chat['content'], history: Chat[]) {
+    // Convert chat to OpenAI format
+    const historyMessages = history.map(this.convertChatToOpenAIFormat);
+    // Make new user message
+    const newMessage = this.convertChatToOpenAIFormat(makeUserChat(chatContent));
+    // Create chat completion stream
+    await this.createChatCompletionStream([...historyMessages, newMessage]);
+
+    // Flush scheduled message content
+    if (this.scheduledMessageContent) {
+      await this.flushScheduledMessageContent([...history, makeUserChat(chatContent)]);
+    }
+  }
+
+  private async createChatCompletionStream(_messages: ChatCompletionMessageParam[]) {
+    const { openaiConfig, extensionConfig } = await settingStorage.get();
+    const { forgetChatAfter, autoSelectModel, useLatestImage, autoToolSelection } = extensionConfig;
+
+    let messages = _messages.slice(-forgetChatAfter);
+
+    this.setConfig(openaiConfig);
+
+    const createdAt = await conversationStorage.startAIChat();
+
+    // Auto tool detection for reduce openai token usage
+    if (autoToolSelection) {
+      await this.autoToolDetection(messages);
+    }
+
+    // Set tools by activate status. It depends on auto tool detection or user toggle
+    await this.setThisToolsByActivate();
+
+    // Auto select model by messages. It depends on autoSelectModel setting
+    if (autoSelectModel) {
+      const useLowModel = await this.determineUseLowModel(messages);
+      this.model = useLowModel ? 'gpt-3.5-turbo' : 'gpt-4o-2024-05-13';
+    }
+
+    // Remove all images except last image
+    if (useLatestImage) {
+      messages = await this.getMessagesWithoutImagesExceptLast(messages);
+    }
+
+    let text = '';
+    const result = await this.createChatCompletionStreamWithTools({
+      messages,
+      onContent: delta => {
+        text += delta;
+        conversationStorage.updateAIChat(createdAt, text);
+      },
+      onFunctionCall: functionCall => {
+        const functionName = camelCaseToSentence(functionCall.name);
+        conversationStorage.updateAIChat(
+          createdAt,
+          text ? `${text}\n\`${functionName}...\`` : `\`${functionName}\`` + '  ' + LOADING_PLACEHOLDER,
+        );
+        if (functionCall.name === 'captureRequest') {
+          conversationStorage.deleteChat(createdAt);
+          this.scheduleScreenCaptureMessage();
+        }
+      },
+    });
+
+    return {
+      createdAt,
+      content: result.choices.at(0)?.message.content,
+    };
   }
 
   private convertChatToOpenAIFormat(chat: Chat): ChatCompletionAssistantMessageParam | ChatCompletionUserMessageParam {
@@ -108,94 +178,64 @@ export class LLM extends BaseLLM {
     if (hasImageTool) {
       return false;
     }
-    if (activateTools.length > 4) {
+    if (activateTools.length > 5) {
       return false;
     }
     return true;
   }
 
-  private async createChatCompletionStream(messages: ChatCompletionMessageParam[]) {
-    const { openaiConfig, extensionConfig } = await settingStorage.get();
-    const { forgetChatAfter, autoToolSelection, autoSelectModel } = extensionConfig;
-
-    this.setConfig(openaiConfig);
-
-    const createdAt = await conversationStorage.startAIChat();
-
-    if (autoToolSelection && !this.skipAutoToolsSelection) {
-      try {
-        const selector = new ToolSelector(this.client.apiKey);
-        await selector.selectTool(messages);
-      } catch (e) {
-        console.warn('Error in AutoToolSelection', e);
-      }
+  private async autoToolDetection(messages: ChatCompletionMessageParam[]) {
+    if (this.skipAutoToolsSelection) {
+      return;
     }
+    try {
+      const selector = new ToolSelector(this.client.apiKey);
+      await selector.selectTool(messages);
+    } catch (e) {
+      console.warn('Error in AutoToolDetection', e);
+    }
+  }
+
+  private async setThisToolsByActivate() {
     const activateTools = await toolsStorage.getActivatedTools();
     this.tools = [
       ...this.persistTools,
       ...ALL_TOOLS.filter(tool => activateTools.some(activateTool => activateTool.name === tool.function.name)),
     ];
-    console.log('PERSIST TOOLS', this.persistTools.map(tool => tool.function.name).join(', '));
-    console.log('SELECTED TOOLS', activateTools.map(tool => tool.name).join(', '));
-
-    const slicedMessages = messages.slice(-forgetChatAfter);
-    if (autoSelectModel) {
-      const useLowModel = await this.determineUseLowModel(slicedMessages);
-      this.model = useLowModel ? 'gpt-3.5-turbo' : 'gpt-4o-2024-05-13';
-    }
-
-    let text = '';
-    const result = await this.createChatCompletionStreamWithTools({
-      messages: slicedMessages,
-      onContent: delta => {
-        text += delta;
-        conversationStorage.updateAIChat(createdAt, text);
-      },
-      onFunctionCall: functionCall => {
-        const functionName = camelCaseToSentence(functionCall.name);
-        conversationStorage.updateAIChat(
-          createdAt,
-          text ? `${text}\n${functionName}...` : functionName + '  ' + LOADING_PLACEHOLDER,
-        );
-        if (functionCall.name === 'captureRequest') {
-          this.scheduleScreenCaptureMessage();
-        }
-      },
-    });
-
-    return {
-      createdAt,
-      content: result.choices.at(0)?.message.content,
-    };
   }
 
-  async scheduleScreenCaptureMessage() {
+  private async getMessagesWithoutImagesExceptLast(messages: ChatCompletionMessageParam[]) {
+    const lastImageMessageIndex = this.findLastImageMessageIndex(messages);
+    if (lastImageMessageIndex === -1) {
+      return messages;
+    }
+    const [before, after] = splitArrayByIndex(messages, lastImageMessageIndex);
+    return [...this.replaceImageMessages(before), ...after];
+  }
+
+  private async scheduleScreenCaptureMessage() {
     const base64 = await Screen.capture();
     const kb = calculateImageFileSize(base64);
     this.scheduledMessageContent = { image: { base64, kb } };
   }
 
-  async flushScheduledMessageContent(history: Chat[]) {
+  private async flushScheduledMessageContent(history: Chat[]) {
+    if (!this.scheduledMessageContent) {
+      throw new Error('No scheduled message content');
+    }
     const messageContent = this.scheduledMessageContent;
     this.scheduledMessageContent = null;
     this.skipAutoToolsSelection = true;
-    if (messageContent) {
-      await conversationStorage.saveUserChat(messageContent);
-      await this.chatCompletionWithHistory(messageContent, history);
-    }
+    await conversationStorage.saveUserChat(messageContent);
+    await this.chatCompletionWithHistory(messageContent, history);
     this.skipAutoToolsSelection = false;
   }
+}
 
-  async chatCompletion(chatContent: Chat['content']) {
-    const message = this.convertChatToOpenAIFormat(this.makeUserChat(chatContent));
-    return this.createChatCompletionStream([message]);
-  }
+function makeUserChat(content: Chat['content']) {
+  return { type: 'user', content, createdAt: Date.now() };
+}
 
-  async chatCompletionWithHistory(chatContent: Chat['content'], history: Chat[]) {
-    const historyMessages = history.map(this.convertChatToOpenAIFormat);
-    const newMessage = this.convertChatToOpenAIFormat(this.makeUserChat(chatContent));
-    await this.createChatCompletionStream([...historyMessages, newMessage]);
-
-    await this.flushScheduledMessageContent([...history, this.makeUserChat(chatContent)]);
-  }
+function splitArrayByIndex<T>(array: T[], index: number) {
+  return [array.slice(0, index), array.slice(index)] as const;
 }

@@ -27,10 +27,6 @@ export class ToolSelector extends BaseLLM {
     const initialActivatingTools = await toolsStorage.getActivatedTools();
     await toolsStorage.deactivateAllTools();
 
-    const {
-      extensionConfig: { forgetChatAfter },
-    } = await settingStorage.get();
-
     const toolsByCategory = allTools.reduce<
       { name: string; isActivated: false; abilities: { name: string; desc: string }[] }[]
     >((acc, tool) => {
@@ -67,7 +63,7 @@ export class ToolSelector extends BaseLLM {
       }),
     ];
 
-    const messagesWithText = replaceImages(messages);
+    const messagesWithText = this.replaceImageMessages(messages);
 
     const lastMyMessage = messagesWithText.at(-1);
     if (lastMyMessage === undefined) {
@@ -91,7 +87,7 @@ export class ToolSelector extends BaseLLM {
       try {
         this.createChatCompletionWithTools({
           messages: [
-            ...messagesWithText.slice(0, -1).slice(-forgetChatAfter),
+            ...messagesWithText.slice(0, -1),
             {
               role: 'user',
               content: `If I type "${request}" in the last chat, and that is a request, Activate tools to handle that request (IF NEEDED!). OR NOT, JUST ANSWER "NO"\n\n'''json\n${selectableToolsText}'''\n\n`,
@@ -111,24 +107,4 @@ export class ToolSelector extends BaseLLM {
       }
     });
   }
-}
-
-function replaceImages(messages: ChatCompletionMessageParam[]) {
-  return messages.map(message => {
-    if (message.role === 'user') {
-      return {
-        ...message,
-        content: (message as ChatCompletionUserMessageParam).content.map(content => {
-          if (content.type === 'image_url') {
-            return {
-              type: 'text',
-              text: `This is an image.`,
-            };
-          }
-          return content;
-        }),
-      };
-    }
-    return message;
-  });
 }

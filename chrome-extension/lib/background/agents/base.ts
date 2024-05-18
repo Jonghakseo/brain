@@ -4,6 +4,7 @@ import {
   ChatCompletionMessage,
   ChatCompletionMessageParam,
   ChatCompletionSystemMessageParam,
+  ChatCompletionUserMessageParam,
   ChatModel,
 } from 'openai/resources';
 import { billingInfoStorage, OpenAIConfig } from '@chrome-extension-boilerplate/shared';
@@ -183,5 +184,37 @@ export class BaseLLM {
     }
 
     return result;
+  }
+
+  protected replaceImageMessages(
+    messages: ChatCompletionMessageParam[],
+    replaceContent: ChatCompletionUserMessageParam['content'][number] = {
+      type: 'text',
+      text: `This is an image.`,
+    },
+  ) {
+    return messages.map(message => {
+      if (message.role === 'user') {
+        return {
+          ...message,
+          content: (message as ChatCompletionUserMessageParam).content.map(content => {
+            if (content.type === 'image_url') {
+              return replaceContent;
+            }
+            return content;
+          }),
+        };
+      }
+      return message;
+    });
+  }
+
+  protected findLastImageMessageIndex(messages: ChatCompletionMessageParam[]) {
+    for (let i = messages.length - 1; i >= 0; i--) {
+      if (messages[i].role === 'user' && messages[i].content.some(content => content.type === 'image_url')) {
+        return i;
+      }
+    }
+    return -1;
   }
 }
