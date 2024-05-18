@@ -94,6 +94,13 @@ export default function Setting() {
               settingStorage.updateExtensionConfig('useLatestImage', e.currentTarget.checked);
             }}
           />
+          <Switch
+            label="Use Detail Analyze Image (more token usage)"
+            defaultChecked={extensionConfig.detailAnalyzeImage}
+            onChange={e => {
+              settingStorage.updateExtensionConfig('detailAnalyzeImage', e.currentTarget.checked);
+            }}
+          />
           <Typography as="h2" className="text-xl font-semibold">
             Experiment Config
           </Typography>

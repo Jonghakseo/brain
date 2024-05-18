@@ -13,6 +13,6 @@ export const screenTools = [
   zodFunction({
     function: captureRequest,
     schema: z.object({}),
-    description: 'Request a screen capture. You may get a screenshot of the current tab.',
+    description: 'Request a screen capture. You can get a screenshot of the current tab.',
   }),
 ];

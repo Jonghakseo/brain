@@ -27,6 +27,10 @@ export class OpenAiLLM implements BaseLLM {
     this.client = new OpenAI({ apiKey });
   }
 
+  log(...args: Parameters<typeof console.log>) {
+    console.log(`[${this.name + ' ' + this.model}] `, ...args);
+  }
+
   async saveUsage(usage: ChatCompletion['usage']) {
     const { completion_tokens, prompt_tokens } = usage ?? {};
     prompt_tokens && (await billingInfoStorage.addInputTokens(prompt_tokens, this.model));
@@ -61,7 +65,7 @@ export class OpenAiLLM implements BaseLLM {
     }
 
     for (const choice of result.choices) {
-      console.log(`[${this.name}] ` + 'message', choice.message.content);
+      this.log('message', choice.message.content);
     }
 
     return result;
@@ -108,31 +112,31 @@ export class OpenAiLLM implements BaseLLM {
     });
     runner
       .on('connect', () => {
-        console.log(`[${this.name}] ` + 'connected');
+        this.log('connected');
         onConnect?.(runner);
       })
       .on('message', message => {
         onMessage?.(message);
       })
       .on('end', () => {
-        console.log(`[${this.name}] ` + 'end');
+        this.log('end');
         onEnd?.(runner);
       })
       .on('error', error => {
-        console.warn(`[${this.name}] ` + 'error', error);
+        this.log('error', error);
         onError?.(error);
       })
       .on('content', contentDelta => onContent?.(contentDelta))
       .on('functionCall', functionCall => {
-        console.log(`[${this.name}] ` + 'functionCall', functionCall);
+        this.log('functionCall', functionCall);
         onFunctionCall?.(functionCall);
       })
       .on('functionCallResult', functionCallResult => {
-        console.log(`[${this.name}] ` + 'functionCallResult', functionCallResult);
+        this.log('functionCallResult', functionCallResult);
         onFunctionCallResult?.(functionCallResult);
       })
       .on('totalUsage', async usage => {
-        console.log(`[${this.name}] ` + 'SAVE USAGE', usage);
+        this.log('SAVE USAGE', usage);
         await this.saveUsage(usage);
       });
 
@@ -182,23 +186,23 @@ export class OpenAiLLM implements BaseLLM {
         },
       })
       .on('connect', () => {
-        console.log(`[${this.name}] ` + 'connected');
+        this.log('connected');
         onConnect?.();
       })
       .on('functionCall', functionCall => {
-        console.log(`[${this.name}] ` + 'functionCall', functionCall);
+        this.log('functionCall', functionCall);
         onFunctionCall?.(functionCall);
       })
       .on('functionCallResult', functionCallResult => {
-        console.log(`[${this.name}] ` + 'functionCallResult', functionCallResult);
+        this.log('functionCallResult', functionCallResult);
         onFunctionCallResult?.(functionCallResult);
       })
       .on('message', message => {
-        console.log(`[${this.name}] ` + 'message', message);
+        this.log('message', message);
         onMessage?.(message);
       })
       .on('error', error => {
-        console.warn(`[${this.name}] ` + 'error', error);
+        this.log('error', error);
         stream.abort();
         onError?.(error);
       })

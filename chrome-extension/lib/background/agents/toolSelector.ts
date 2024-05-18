@@ -1,6 +1,4 @@
 import { toolsStorage } from '@chrome-extension-boilerplate/shared';
-import { zodFunction } from '@lib/background/tools';
-import { z } from 'zod';
 import { ChatCompletionMessageParam, ChatCompletionUserMessageParam } from 'openai/resources';
 import { OpenAiLLM } from '@lib/background/agents/openai';
 import { replaceImageMessages } from '@lib/background/agents/converters';
@@ -15,11 +13,10 @@ export class ToolSelector extends OpenAiLLM {
     // this.model = 'gpt-4o';
     this.isJson = true;
     this.config = {
-      temperature: 1,
-      topP: 0.9,
+      temperature: 0.7,
+      topP: 1,
       maxTokens: 2000,
-      systemPrompt:
-        'You are a tool selector assistant. Please activate the necessary tools perfectly. Think step by step.',
+      systemPrompt: 'You are a TOOL SELECTOR',
     };
   }
 
@@ -44,96 +41,70 @@ export class ToolSelector extends OpenAiLLM {
 
     const selectableToolsText = JSON.stringify(allToolsNameAndDescription, null, 2);
 
-    const voteCount = 3;
     const result = await this.createChatCompletion({
-      n: voteCount,
+      n: 5,
       messages: [
         ...messagesWithText.slice(0, -1),
         {
           role: 'user',
-          content: `If I type "${request}" in the last chat, and it's a request, print out what tool I should use.
-          # EXAMPLES  
-          \`\`\`json
-          // Request: "I want to open github.com and looking for some new interesting repositories."
-          {
-            "isNeed": true,
-            "activateTools": [getCurrentTabInfo, getTabsInfo, navigateTab, captureRequest],
-            "reason": "This request needs to move or open a new tab. and also need to capture the screen."
-          } 
-          // Request: "Hi. How are you?"
-          {
-            "isNeed": false,
-            "activateTools": [],
-            "reason": "This request doesn't need any tools."
-          }
-          // Request: "It's boring."
-          {
-            "isNeed": false,
-            "activateTools": [partyFirecrackers],
-            "reason": "This request doesn't need other tools. But you can use partyFirecrackers."
-          }
-          \`\`\`
-          \n
-          # TOOL LIST\n
-          \n
-          \`\`\`json\n${selectableToolsText}\n\n\`\`\``,
+          content: `If I type ["${request}"] in the last chat, and it's a request, print out what tool I should use.
+Focus on the REQUEST. not the whole conversation.
+Please tell me the necessary tools perfectly. Think carefully.
+# REQUEST
+|> ${request}
+
+---
+
+# EXAMPLES
+\`\`\`json
+// Request: "Hi. How are you?"
+{
+  "isNeed": false,
+  "activateTools": [],
+  "reason": "This request doesn't need any tools."
+}
+// Request: "It's boring."
+{
+  "isNeed": false,
+  "activateTools": [partyFirecrackers],
+  "reason": "This request doesn't need other tools. But you can use partyFirecrackers."
+}
+// Request: "I want to open github.com and looking for some new interesting repositories."
+{
+  "isNeed": true,
+  "activateTools": [getCurrentTabInfo, getTabsInfo, navigateTab, captureRequest],
+  "reason": "This request needs to move or open a new tab. and also need to capture the screen."
+} 
+\`\`\`
+
+# TOOL LIST
+
+\`\`\`json\n${selectableToolsText}\n\n\`\`\``,
         },
       ],
     });
 
-    try {
-      const results = result.choices.reduce<Record<string, number>>((acc, choice) => {
-        if (choice.message.content) {
+    const results = result.choices.reduce<Record<string, number>>((acc, choice) => {
+      if (choice.message.content) {
+        try {
           const content = JSON.parse(choice.message.content) as { isNeed: boolean; activateTools: string[] };
           if (content.isNeed && content.activateTools?.length > 0) {
             content.activateTools.forEach(toolName => {
               acc[toolName] = (acc[toolName] ?? 0) + 1;
             });
           }
-        }
-        return acc;
-      }, {});
-      for (const [name, number] of Object.entries(results)) {
-        // If more than half of the votes are for a tool, activate it.
-        if (number > voteCount / 2) {
-          await toolsStorage.activateTool(name);
+        } catch {
+          return acc;
         }
       }
-      console.log('results', results);
-    } catch (e) {
-      console.log('JSON Parse Error in ToolSelector');
-      throw e;
+      return acc;
+    }, {});
+
+    for (const [name, number] of Object.entries(results)) {
+      // If more than half of the votes are for a tool, activate it.
+      if (number > Object.keys(results).length / 2) {
+        await toolsStorage.activateTool(name);
+      }
     }
-    //
-    // return new Promise<void>((resolve, reject) => {
-    //   const timeoutId = setTimeout(async () => {
-    //     for (const initialActivatingTool of initialActivatingTools) {
-    //       await toolsStorage.activateTool(initialActivatingTool.name);
-    //     }
-    //     reject('Tool Selector Timeout');
-    //   }, 5000);
-    //
-    //   try {
-    //     this.createChatCompletionWithTools({
-    //       messages: [
-    //         ...messagesWithText.slice(0, -1),
-    //         {
-    //           role: 'user',
-    //           content: `If I type "${request}" in the last chat, and that is a request, Activate tools to handle that request (IF NEEDED!). OR NOT, JUST ANSWER "NO"\n\n'''json\n${selectableToolsText}'''\n\n`,
-    //         },
-    //       ],
-    //       onEnd: () => {
-    //         clearTimeout(timeoutId);
-    //         resolve();
-    //       },
-    //       onError: () => {
-    //         clearTimeout(timeoutId);
-    //         resolve();
-    //       },
-    //     });
-    //   } catch (e) {
-    //     reject(e);
-    //   }
-    // });
   }
 }

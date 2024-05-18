@@ -12,6 +12,7 @@ type Setting = {
     autoToolSelection: boolean;
     autoSelectModel: boolean;
     captureQuality: number;
+    detailAnalyzeImage: boolean;
     forgetChatAfter: number;
     useLatestImage: boolean;
   };
@@ -43,6 +44,7 @@ const storage = createStorage<Setting>(
       autoCapture: false,
       autoToolSelection: false,
       autoSelectModel: false,
+      detailAnalyzeImage: true,
       useLatestImage: true,
       captureQuality: 25,
       forgetChatAfter: 10,

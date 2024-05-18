@@ -195,7 +195,8 @@ export class LLM {
     }
     try {
       const selector = new ToolSelector();
-      await selector.selectTool(messages);
+      // Max 10 messages for auto tool detection
+      await selector.selectTool(messages.slice(-10));
     } catch (e) {
       console.warn('Error in AutoToolDetection', e);
     }
