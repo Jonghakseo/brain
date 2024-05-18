@@ -118,6 +118,7 @@ export class LLM extends BaseLLM {
       messages = await this.getMessagesWithoutImagesExceptLast(messages);
     }
 
+    console.log('ACTIVATED TOOLS', this.tools.map(tool => tool.function.name).join(', '));
     let text = '';
     const result = await this.createChatCompletionStreamWithTools({
       messages,
@@ -126,6 +127,9 @@ export class LLM extends BaseLLM {
         conversationStorage.updateAIChat(createdAt, text);
       },
       onFunctionCall: functionCall => {
+        if (!functionCall?.name) {
+          return;
+        }
         const functionName = camelCaseToSentence(functionCall.name);
         conversationStorage.updateAIChat(
           createdAt,
@@ -166,6 +170,8 @@ export class LLM extends BaseLLM {
   private async determineUseLowModel(messages: ChatCompletionMessageParam[]) {
     // check has image into messages
     const hasImage = messages.some(message => {
+      // eslint-disable-next-line
+      // @ts-ignore
       return message.role === 'user' && message.content.some(content => content.type === 'image_url');
     });
     if (hasImage) {
@@ -226,15 +232,15 @@ export class LLM extends BaseLLM {
     this.scheduledMessageContent = null;
     this.skipAutoToolsSelection = true;
     await conversationStorage.saveUserChat(messageContent);
-    const createdAt = await conversationStorage.getLastAIChat();
-    await conversationStorage.deleteChat(createdAt);
+    const chat = await conversationStorage.getLastAIChat();
+    chat && (await conversationStorage.deleteChat(chat.createdAt));
     await this.chatCompletionWithHistory(messageContent, history);
     this.skipAutoToolsSelection = false;
   }
 }
 
 function makeUserChat(content: Chat['content']) {
-  return { type: 'user', content, createdAt: Date.now() };
+  return { type: 'user', content, createdAt: Date.now() } as const;
 }
 
 function splitArrayByIndex<T>(array: T[], index: number) {

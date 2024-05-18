@@ -47,7 +47,7 @@ export class BaseLLM {
     onEnd,
   }: {
     messages: ChatCompletionMessageParam[];
-    onContent?: (delta: string, snapshot: string) => void;
+    onContent?: (delta: string) => void;
     onConnect?: (runner: ChatCompletionRunner) => void;
     onFunctionCall?: (functionCall: ChatCompletionMessage['function_call']) => void;
     onFunctionCallResult?: (functionCallResult: string) => void;
@@ -93,7 +93,7 @@ export class BaseLLM {
         console.warn(`[${this.name}] ` + 'error', error);
         onError?.(error);
       })
-      .on('content', (contentDelta, contentSnapshot) => onContent?.(contentDelta, contentSnapshot))
+      .on('content', contentDelta => onContent?.(contentDelta))
       .on('functionCall', functionCall => {
         console.log(`[${this.name}] ` + 'functionCall', functionCall);
         onFunctionCall?.(functionCall);
@@ -197,6 +197,8 @@ export class BaseLLM {
       if (message.role === 'user') {
         return {
           ...message,
+          // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+          // @ts-ignore
           content: (message as ChatCompletionUserMessageParam).content.map(content => {
             if (content.type === 'image_url') {
               return replaceContent;
@@ -211,6 +213,8 @@ export class BaseLLM {
 
   protected findLastImageMessageIndex(messages: ChatCompletionMessageParam[]) {
     for (let i = messages.length - 1; i >= 0; i--) {
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
       if (messages[i].role === 'user' && messages[i].content.some(content => content.type === 'image_url')) {
         return i;
       }

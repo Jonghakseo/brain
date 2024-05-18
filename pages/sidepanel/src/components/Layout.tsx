@@ -12,6 +12,9 @@ export default function Layout({ children }: LayoutProps) {
 
   const listItems = routeObjects.map(routeObject => {
     const { path: _path } = routeObject;
+    if (!_path) {
+      throw new Error('Path is required');
+    }
     const name = _path === '/' ? 'Chat' : _path.slice(1).charAt(0).toUpperCase() + _path.slice(2);
     const path = _path.replace('/', '#');
 

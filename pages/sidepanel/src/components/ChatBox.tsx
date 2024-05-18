@@ -1,6 +1,6 @@
 import Markdown from 'react-markdown';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Button, IconButton, Spinner } from '@material-tailwind/react';
 import ImageViewModal from '@src/components/ImageViewModal';
 import remarkGfm from 'remark-gfm';
@@ -54,7 +54,7 @@ export default function ChatBox({ className = '', image, text }: ChatBoxProps) {
           },
           // eslint-disable-next-line
           img({ src, alt, node, ...rest }) {
-            if (!src.startsWith('http')) {
+            if (!src?.startsWith('http')) {
               return null;
             }
             return <img src={src} alt={alt} {...rest} />;

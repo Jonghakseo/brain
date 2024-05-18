@@ -1,5 +1,5 @@
 import { BaseLLM } from '@lib/background/agents/base';
-import { settingStorage, toolsStorage } from '@chrome-extension-boilerplate/shared';
+import { toolsStorage } from '@chrome-extension-boilerplate/shared';
 import { zodFunction } from '@lib/background/tools';
 import { z } from 'zod';
 import { ChatCompletionMessageParam, ChatCompletionUserMessageParam } from 'openai/resources';
@@ -13,12 +13,13 @@ export class ToolSelector extends BaseLLM {
     this.model = 'gpt-3.5-turbo-0125';
     // this.model = 'gpt-4o-2024-05-13';
     this.setConfig({
-      temperature: 0.6,
-      topP: 0.4,
+      temperature: 0.2,
+      topP: 0.2,
       maxTokens: 2000,
       frequencyPenalty: 0,
       presencePenalty: 0,
-      systemPrompt: 'You are a tool selector assistant.',
+      systemPrompt:
+        'You are a tool selector assistant. Please activate the necessary tools perfectly. Think step by step.',
     });
   }
 
@@ -32,19 +33,20 @@ export class ToolSelector extends BaseLLM {
     >((acc, tool) => {
       const category = acc.find(c => c.name === tool.category);
       if (category) {
-        category.abilities.push({ name: tool.name, desc: tool.desc });
+        category.abilities.push({ name: tool.name, desc: tool.description });
       } else {
         acc.push({
-          name: tool.category,
+          name: tool.category ?? 'Uncategorized',
           isActivated: false,
-          abilities: [{ name: tool.name, desc: tool.desc }],
+          abilities: [{ name: tool.name, desc: tool.description }],
         });
       }
       return acc;
     }, []);
 
+    const toolNames = toolsByCategory.map(({ name }) => name) as [string, ...string[]];
     const BulkActivateToolsParam = z.object({
-      names: z.array(z.enum(toolsByCategory.map(({ name }) => name))).max(3),
+      names: z.array(z.enum(toolNames)).min(1).max(3),
     });
 
     async function bulkActivateTools(params: z.infer<typeof BulkActivateToolsParam>) {
@@ -52,6 +54,8 @@ export class ToolSelector extends BaseLLM {
         await toolsStorage.toggleAllByCategory(categoryName, true);
       }
       throw new Error('You can call once.');
+
+      return {};
     }
 
     this.tools = [
@@ -69,7 +73,9 @@ export class ToolSelector extends BaseLLM {
     if (lastMyMessage === undefined) {
       return;
     }
-    const request = (lastMyMessage as ChatCompletionUserMessageParam).content.at(0)?.text;
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-expect-error
+    const request = (lastMyMessage as ChatCompletionUserMessageParam).content.at(0).text;
     if (request === undefined) {
       return;
     }

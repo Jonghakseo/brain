@@ -20,7 +20,8 @@ export default function Home() {
       await sendToBackground('Chat', { content, history });
     } catch (e) {
       console.warn(JSON.stringify(e, null, 2));
-      const message = e.message || e.error.message;
+      // eslint-disable-next-line
+      const message = (e as Error).message || (e as any).error.message;
       const errorTemplate = 'ERROR!\n```shell\n' + message + '\n```';
       void conversationStorage.updateLastAIChat(prev => {
         return prev.replaceAll(LOADING_PLACEHOLDER, '') + '\n' + errorTemplate;

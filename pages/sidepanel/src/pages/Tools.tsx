@@ -8,6 +8,9 @@ export default function Tools() {
 
   const toolsByCategory = tools.reduce(
     (acc, tool) => {
+      if (!tool.category) {
+        tool.category = 'Uncategorized';
+      }
       if (!acc[tool.category]) {
         acc[tool.category] = [];
       }

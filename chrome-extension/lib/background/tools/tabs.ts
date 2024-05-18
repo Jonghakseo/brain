@@ -70,8 +70,12 @@ async function navigateTab(params: z.infer<typeof NavigateTabParams>) {
         }
         const tab = await getCurrentTabInfo();
         try {
+          const tabId = tab?.id ?? params.tabId;
+          if (!tabId) {
+            throw new Error('tabId is required');
+          }
           await chrome.scripting.executeScript({
-            target: { tabId: tab?.id ?? params.tabId },
+            target: { tabId },
             func: moveTab,
             args: [params.url],
           });
