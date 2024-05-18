@@ -12,6 +12,7 @@ type Setting = {
   extensionConfig: {
     autoCapture: boolean;
     autoToolSelection: boolean;
+    autoSelectModel: boolean;
     captureQuality: number;
     forgetChatAfter: number;
   };
@@ -44,6 +45,7 @@ const storage = createStorage<Setting>(
     extensionConfig: {
       autoCapture: false,
       autoToolSelection: false,
+      autoSelectModel: false,
       captureQuality: 25,
       forgetChatAfter: 10,
     },

@@ -33,7 +33,7 @@ export default function Tools() {
                 <Switch
                   label="Toggle All"
                   checked={tools.every(tool => tool.isActivated)}
-                  onChange={() => toolsStorage.toggleAllByCategory(category)}
+                  onChange={event => toolsStorage.toggleAllByCategory(category, event.target.checked)}
                 />
               </div>
               <hr />

@@ -25,8 +25,9 @@ export class BaseLLM {
 
   private async saveUsage(usage: ChatCompletion['usage']) {
     const { completion_tokens, prompt_tokens } = usage ?? {};
-    prompt_tokens && (await billingInfoStorage.addInputTokens(prompt_tokens));
-    completion_tokens && (await billingInfoStorage.addOutputTokens(completion_tokens));
+    const isGPT3 = this.model === 'gpt-3.5-turbo-0125';
+    prompt_tokens && (await billingInfoStorage.addInputTokens(prompt_tokens, isGPT3));
+    completion_tokens && (await billingInfoStorage.addOutputTokens(completion_tokens, isGPT3));
   }
 
   protected setConfig(config: OpenAIConfig) {

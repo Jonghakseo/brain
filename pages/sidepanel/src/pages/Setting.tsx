@@ -9,7 +9,7 @@ export default function Setting() {
       <Typography as="h1" className="text-2xl font-semibold">
         Setting
       </Typography>
-      <section className="flex mt-4 gap-6">
+      <section className="flex mt-4 gap-y-4 gap-x-6 flex-wrap">
         <div className="flex flex-col gap-4">
           <Typography as="h2" className="text-xl font-semibold">
             OpenAI Config
@@ -76,6 +76,24 @@ export default function Setting() {
               settingStorage.updateOpenAIConfig('presencePenalty', e.target.valueAsNumber);
             }}
           />
+          <Typography as="h2" className="text-xl font-semibold">
+            Experiment Config
+          </Typography>
+
+          <Switch
+            label="Auto Tool Section (GPT-3.5 Turbo)"
+            checked={extensionConfig.autoToolSelection}
+            onChange={e => {
+              settingStorage.updateExtensionConfig('autoToolSelection', e.currentTarget.checked);
+            }}
+          />
+          <Switch
+            label="Auto Switch GPT3.5 Turbo (detault: GPT4o)"
+            checked={extensionConfig.autoSelectModel}
+            onChange={e => {
+              settingStorage.updateExtensionConfig('autoSelectModel', e.currentTarget.checked);
+            }}
+          />
         </div>
         <div className="flex flex-col gap-4">
           <Typography as="h2" className="text-xl font-semibold">
@@ -103,17 +121,10 @@ export default function Setting() {
             }}
           />
           <Switch
-            label="Auto Capture"
+            label="Chat with Capture"
             checked={extensionConfig.autoCapture}
             onChange={e => {
               settingStorage.updateExtensionConfig('autoCapture', e.currentTarget.checked);
-            }}
-          />
-          <Switch
-            label="Auto Tool Section (GPT-3.5 Turbo)"
-            checked={extensionConfig.autoToolSelection}
-            onChange={e => {
-              settingStorage.updateExtensionConfig('autoToolSelection', e.currentTarget.checked);
             }}
           />
         </div>

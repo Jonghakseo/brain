@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Button, Card, CardBody } from '@material-tailwind/react';
 import { Chat, conversationStorage } from '@chrome-extension-boilerplate/shared';
 import ChatBox from '@src/components/ChatBox';
@@ -16,6 +16,8 @@ export default function ChattingForm({ chats, sendChat }: ChattingFormProps) {
   const [loading, setLoading] = useState(false);
 
   useChatListAutoScroll(chatListRef, chats);
+  // FIXME: This is hacky way to fix chatbox markdown rendering [Object] bug
+  useForceRerenderWhenMounted();
 
   const handleSendChatMessage = useCallback(
     async (content: Chat['content']) => {
@@ -84,4 +86,11 @@ function ResetButton() {
       </svg>
     </Button>
   );
+}
+
+function useForceRerenderWhenMounted() {
+  const [, setTick] = useState(0);
+  useEffect(() => {
+    setTimeout(() => setTick(tick => tick + 1), 10);
+  }, []);
 }

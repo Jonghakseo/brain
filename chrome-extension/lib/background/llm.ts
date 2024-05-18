@@ -63,6 +63,7 @@ chrome.runtime.onInstalled.addListener(() => {
 export class LLM extends BaseLLM {
   skipAutoToolsSelection = false;
   scheduledMessageContent: Chat['content'] | null = null;
+  persistTools = [...settingTools];
 
   constructor(key: string) {
     super(key);
@@ -92,9 +93,29 @@ export class LLM extends BaseLLM {
     return { role: 'assistant', content: chat.content.text };
   }
 
+  private async determineModel(messages: ChatCompletionMessageParam[]) {
+    // check has image into messages
+    const hasImage = messages.some(message => {
+      return message.role === 'user' && message.content.some(content => content.type === 'image_url');
+    });
+    if (hasImage) {
+      this.model = 'gpt-4o-2024-05-13';
+      return;
+    }
+    // check has screen capture tool into active tools
+    const activateTools = await toolsStorage.getActivatedTools();
+    const hasImageTool = activateTools.some(tool => tool.name === 'captureRequest');
+    if (hasImageTool) {
+      this.model = 'gpt-4o-2024-05-13';
+      return;
+    }
+    this.model = 'gpt-3.5-turbo-0125';
+    return;
+  }
+
   private async createChatCompletionStream(messages: ChatCompletionMessageParam[]) {
     const { openaiConfig, extensionConfig } = await settingStorage.get();
-    const { forgetChatAfter, autoToolSelection } = extensionConfig;
+    const { forgetChatAfter, autoToolSelection, autoSelectModel } = extensionConfig;
 
     this.setConfig(openaiConfig);
 
@@ -102,24 +123,26 @@ export class LLM extends BaseLLM {
 
     if (autoToolSelection && !this.skipAutoToolsSelection) {
       try {
-        conversationStorage.updateAIChat(createdAt, `Selecting tools... ${LOADING_PLACEHOLDER}`);
         const selector = new ToolSelector(this.client.apiKey);
         await selector.selectTool(messages);
       } catch (e) {
         console.warn('Error in AutoToolSelection', e);
       }
     }
+    const activateTools = await toolsStorage.getActivatedTools();
+    this.tools = [
+      ...this.persistTools,
+      ...ALL_TOOLS.filter(tool => activateTools.some(activateTool => activateTool.name === tool.function.name)),
+    ];
 
-    let activateTools = await toolsStorage.getActivatedTools();
-    if (activateTools.length === 0) {
-      await toolsStorage.activateTool('getMyTools');
-      activateTools = await toolsStorage.getActivatedTools();
+    const slicedMessages = messages.slice(-forgetChatAfter);
+    if (autoSelectModel) {
+      await this.determineModel(slicedMessages);
     }
-    this.tools = ALL_TOOLS.filter(tool => activateTools.some(activateTool => activateTool.name === tool.function.name));
 
     let text = '';
     const result = await this.createChatCompletionStreamWithTools({
-      messages: [...messages.slice(-forgetChatAfter)],
+      messages: slicedMessages,
       onContent: delta => {
         text += delta;
         conversationStorage.updateAIChat(createdAt, text);
