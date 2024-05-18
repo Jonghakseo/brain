@@ -14,6 +14,7 @@ type Setting = {
     captureQuality: number;
     detailAnalyzeImage: boolean;
     forgetChatAfter: number;
+    visibleChatAfterLine: boolean;
     useLatestImage: boolean;
   };
 };
@@ -46,6 +47,7 @@ const storage = createStorage<Setting>(
       autoSelectModel: false,
       detailAnalyzeImage: true,
       useLatestImage: true,
+      visibleChatAfterLine: true,
       captureQuality: 25,
       forgetChatAfter: 10,
     },

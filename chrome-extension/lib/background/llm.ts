@@ -18,6 +18,7 @@ import {
   searchTools,
   settingTools,
   tabsTools,
+  toolManagingTools,
   urlTools,
 } from '@lib/background/tools';
 import { Screen } from '@lib/background/program/Screen';
@@ -50,6 +51,7 @@ chrome.runtime.onInstalled.addListener(() => {
 
   // Resister all tools when the extension is installed
   void toolsStorage.registerTools([
+    ...addCategoryIntoTools(toolManagingTools)('Config'),
     ...addCategoryIntoTools(settingTools)('Config'),
     ...addCategoryIntoTools(urlTools)('History & Bookmark'),
     ...addCategoryIntoTools(tabsTools)('Tab Manage & Navigation'),
@@ -65,7 +67,7 @@ export class LLM {
   llm: BaseLLM;
   skipAutoToolsSelection = false;
   scheduledMessageContent: Chat['content'] | null = null;
-  persistTools = [...settingTools];
+  persistTools = [...toolManagingTools];
 
   constructor(llm: BaseLLM) {
     this.llm = llm;
@@ -120,12 +122,13 @@ export class LLM {
     }
 
     console.log('ACTIVATED TOOLS', this.llm.tools.map(tool => tool.function.name).join(', '));
+    const throttledUpdateAIChat = makeThrottle(conversationStorage.updateAIChat, 32);
     let text = '';
     await this.llm.createChatCompletionStreamWithTools({
       messages,
       onContent: delta => {
         text += delta;
-        conversationStorage.updateAIChat(createdAt, text);
+        throttledUpdateAIChat(createdAt, text);
       },
       onFunctionCall: functionCall => {
         if (!functionCall?.name) {
@@ -183,7 +186,7 @@ export class LLM {
     if (hasImageTool) {
       return false;
     }
-    if (activateTools.length > 5) {
+    if (activateTools.length > this.persistTools.length + 2) {
       return false;
     }
     return true;
@@ -254,3 +257,17 @@ export class LLM {
 function makeUserChat(content: Chat['content']) {
   return { type: 'user', content, createdAt: Date.now() } as const;
 }
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const makeThrottle = <T extends (...args: any[]) => any>(fn: T, ms: number) => {
+  let id: ReturnType<typeof setTimeout> | null = null;
+  return (...args: Parameters<T>) => {
+    if (id) {
+      clearTimeout(id);
+    }
+    id = setTimeout(() => {
+      id = null;
+      fn(...args);
+    }, ms);
+  };
+};

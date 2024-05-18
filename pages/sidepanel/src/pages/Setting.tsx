@@ -70,10 +70,17 @@ export default function Setting() {
               settingStorage.updateExtensionConfig('captureQuality', e.target.valueAsNumber);
             }}
           />
+          <Switch
+            label="Show Chat After Line"
+            defaultChecked={extensionConfig.visibleChatAfterLine}
+            onChange={e => {
+              settingStorage.updateExtensionConfig('visibleChatAfterLine', e.currentTarget.checked);
+            }}
+          />
           <Input
             label="Forget Chat After"
             step={1}
-            min={0}
+            min={1}
             type="number"
             value={extensionConfig.forgetChatAfter}
             onChange={e => {
@@ -106,7 +113,7 @@ export default function Setting() {
           </Typography>
 
           <Switch
-            label="Auto Tool Selection"
+            label="Auto Tool Selection (reduce token usage)"
             defaultChecked={extensionConfig.autoToolSelection}
             onChange={e => {
               settingStorage.updateExtensionConfig('autoToolSelection', e.currentTarget.checked);

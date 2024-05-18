@@ -47,9 +47,7 @@ export class ToolSelector extends OpenAiLLM {
         ...messagesWithText.slice(0, -1),
         {
           role: 'user',
-          content: `If I type ["${request}"] in the last chat, and it's a request, print out what tool I should use.
-Focus on the REQUEST. not the whole conversation.
-Please tell me the necessary tools perfectly. Think carefully.
+          content: `If I type ["${request}"] in the last chat, and it's a request, print out what tool I should use. Please tell me the necessary tools perfectly. Think carefully.
 # REQUEST
 |> ${request}
 
@@ -100,6 +98,7 @@ Please tell me the necessary tools perfectly. Think carefully.
       return acc;
     }, {});
 
+    console.log('ToolSelector results:', results);
     for (const [name, number] of Object.entries(results)) {
       // If more than half of the votes are for a tool, activate it.
       if (number > Object.keys(results).length / 2) {

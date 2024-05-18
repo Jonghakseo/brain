@@ -1,5 +1,5 @@
 import { Fragment, useCallback, useEffect, useRef, useState } from 'react';
-import { Button, Card, CardBody, IconButton, Typography } from '@material-tailwind/react';
+import { Button, Card, CardBody, IconButton } from '@material-tailwind/react';
 import { Chat, conversationStorage, settingStorage, useStorage } from '@chrome-extension-boilerplate/shared';
 import ChatBox from '@src/components/ChatBox';
 import ChatProfile from '@src/components/ChatProfile';
@@ -15,7 +15,7 @@ export default function ChattingForm({ chats, sendChat }: ChattingFormProps) {
   const chatListRef = useRef<HTMLUListElement>(null);
   const [loading, setLoading] = useState(false);
   const {
-    extensionConfig: { forgetChatAfter },
+    extensionConfig: { forgetChatAfter, visibleChatAfterLine },
   } = useStorage(settingStorage);
 
   useChatListAutoScroll(chatListRef, chats);
@@ -38,16 +38,16 @@ export default function ChattingForm({ chats, sendChat }: ChattingFormProps) {
         ref={chatListRef}
         className="border rounded-[24px] border-gray-900/10 flex-grow p-5 flex flex-col gap-4 overflow-y-scroll overflow-x-hidden relative">
         <li className="flex flex-row gap-4 items-start">
+          <ChatProfile type="ai" />
           <Card className="w-auto max-w-[90%]">
             <CardBody className="p-4 text-pretty">
               <ChatBox text="Hello! I'm your browser assistant. How can I help you?" />
             </CardBody>
           </Card>
-          <ChatProfile type="ai" />
         </li>
         {chats.map((chat, index) => {
           const isUser = chat.type === 'user';
-          const showForgetGuideLine = index === chats.length - forgetChatAfter;
+          const showForgetGuideLine = visibleChatAfterLine && index === chats.length - forgetChatAfter;
           return (
             <Fragment key={chat.createdAt}>
               {showForgetGuideLine && <ForgetGuideline forgetChatAfter={forgetChatAfter} />}
@@ -96,24 +96,39 @@ function ResetButton() {
 }
 
 function ForgetGuideline({ forgetChatAfter }: { forgetChatAfter: number }) {
+  const deleteBeforeThis = () => {
+    void conversationStorage.set(prev => {
+      return { ...prev, chats: prev.chats.slice(-forgetChatAfter) };
+    });
+  };
+
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex items-center gap-2 py-1">
       <hr className="flex-grow border-gray-900/10" />
       <IconButton
         size="sm"
+        variant="text"
         color="indigo"
-        className="w-4 h-5 rounded-md"
+        className="w-5 h-5 rounded-sm"
         onClick={() => settingStorage.updateExtensionConfig('forgetChatAfter', forgetChatAfter + 1)}>
         ↑
       </IconButton>
       <hr className="flex-grow border-gray-900/10" />
-      <span className="text-gray-500">Forget before {forgetChatAfter} messages</span>
+      <Button
+        size="sm"
+        color="black"
+        variant="text"
+        className="py-0.5 px-1 runded-sm text-xs"
+        onClick={deleteBeforeThis}>
+        delete until now
+      </Button>
       <hr className="flex-grow border-gray-900/10" />
       <IconButton
         size="sm"
+        variant="text"
         color="indigo"
-        className="w-4 h-5 rounded-md"
-        onClick={() => settingStorage.updateExtensionConfig('forgetChatAfter', forgetChatAfter - 1)}>
+        className="w-5 h-5 rounded-sm"
+        onClick={() => settingStorage.updateExtensionConfig('forgetChatAfter', Math.max(forgetChatAfter - 1, 1))}>
         ↓
       </IconButton>
       <hr className="flex-grow border-gray-900/10" />
