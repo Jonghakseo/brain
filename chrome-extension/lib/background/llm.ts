@@ -111,7 +111,7 @@ export class LLM {
     // Auto select model by messages. It depends on autoSelectModel setting
     if (autoSelectModel) {
       const useLowModel = await this.determineUseLowModel(messages);
-      this.llm.model = useLowModel ? 'gpt-3.5-turbo' : 'gpt-4o-2024-05-13';
+      this.llm.model = useLowModel ? 'gpt-3.5-turbo' : 'gpt-4o';
     }
 
     // Remove all images except last image

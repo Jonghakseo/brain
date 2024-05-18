@@ -12,7 +12,7 @@ import { ChatCompletionRunner } from 'openai/lib/ChatCompletionRunner';
 import { BaseLLM } from '@lib/background/agents/base';
 
 export class OpenAiLLM implements BaseLLM {
-  name: string = 'BaseLLM';
+  name: string = 'OpenAiLLM';
   client: OpenAI;
   model: Extract<ChatModel, 'gpt-4o' | 'gpt-3.5-turbo'>;
   config: LLMConfig | null = null;
@@ -31,6 +31,40 @@ export class OpenAiLLM implements BaseLLM {
     const { completion_tokens, prompt_tokens } = usage ?? {};
     prompt_tokens && (await billingInfoStorage.addInputTokens(prompt_tokens, this.model));
     completion_tokens && (await billingInfoStorage.addOutputTokens(completion_tokens, this.model));
+  }
+
+  async createChatCompletion({ messages, n }: { messages: ChatCompletionMessageParam[]; n?: number }) {
+    if (!this.config) {
+      throw new Error('config is not set');
+    }
+    const { systemPrompt, topP, temperature, maxTokens } = this.config;
+
+    const systemMessage: ChatCompletionSystemMessageParam = {
+      role: 'system',
+      content: systemPrompt,
+    };
+
+    const result = await this.client.chat.completions.create({
+      model: this.model,
+      messages: [systemMessage, ...messages],
+      n,
+      temperature,
+      max_tokens: maxTokens,
+      top_p: topP,
+      response_format: {
+        type: this.isJson ? 'json_object' : 'text',
+      },
+    });
+
+    if (result.usage) {
+      await this.saveUsage(result.usage);
+    }
+
+    for (const choice of result.choices) {
+      console.log(`[${this.name}] ` + 'message', choice.message.content);
+    }
+
+    return result;
   }
 
   async createChatCompletionWithTools({

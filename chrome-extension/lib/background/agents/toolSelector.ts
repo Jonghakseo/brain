@@ -12,10 +12,11 @@ export class ToolSelector extends OpenAiLLM {
     super();
     this.toolChoice = 'required';
     this.model = 'gpt-3.5-turbo';
-    // this.model = 'gpt-4o-2024-05-13';
+    // this.model = 'gpt-4o';
+    this.isJson = true;
     this.config = {
-      temperature: 0.2,
-      topP: 0.2,
+      temperature: 1,
+      topP: 0.9,
       maxTokens: 2000,
       systemPrompt:
         'You are a tool selector assistant. Please activate the necessary tools perfectly. Think step by step.',
@@ -24,47 +25,9 @@ export class ToolSelector extends OpenAiLLM {
 
   async selectTool(messages: ChatCompletionMessageParam[]) {
     const allTools = await toolsStorage.getTools();
-    const initialActivatingTools = await toolsStorage.getActivatedTools();
+    const allToolsNameAndDescription = allTools.map(tool => ({ name: tool.name, description: tool.description }));
+    // const initialActivatingTools = await toolsStorage.getActivatedTools();
     await toolsStorage.deactivateAllTools();
-
-    const toolsByCategory = allTools.reduce<
-      { name: string; isActivated: false; abilities: { name: string; desc: string }[] }[]
-    >((acc, tool) => {
-      const category = acc.find(c => c.name === tool.category);
-      if (category) {
-        category.abilities.push({ name: tool.name, desc: tool.description });
-      } else {
-        acc.push({
-          name: tool.category ?? 'Uncategorized',
-          isActivated: false,
-          abilities: [{ name: tool.name, desc: tool.description }],
-        });
-      }
-      return acc;
-    }, []);
-
-    const toolNames = toolsByCategory.map(({ name }) => name) as [string, ...string[]];
-    const BulkActivateToolsParam = z.object({
-      names: z.array(z.enum(toolNames)).min(1).max(3),
-    });
-
-    async function bulkActivateTools(params: z.infer<typeof BulkActivateToolsParam>) {
-      for (const categoryName of params.names) {
-        await toolsStorage.toggleAllByCategory(categoryName, true);
-      }
-      throw new Error('You can call once.');
-
-      return {};
-    }
-
-    this.tools = [
-      zodFunction({
-        function: bulkActivateTools,
-        schema: BulkActivateToolsParam,
-        description:
-          'Activate multiple tools. You can pass multiple names. (ex. ["Config", "Search & Screen Capture"])',
-      }),
-    ];
 
     const messagesWithText = replaceImageMessages(messages);
 
@@ -79,37 +42,98 @@ export class ToolSelector extends OpenAiLLM {
       return;
     }
 
-    const selectableToolsText = JSON.stringify(toolsByCategory, null, 2);
+    const selectableToolsText = JSON.stringify(allToolsNameAndDescription, null, 2);
 
-    return new Promise<void>((resolve, reject) => {
-      const timeoutId = setTimeout(async () => {
-        for (const initialActivatingTool of initialActivatingTools) {
-          await toolsStorage.activateTool(initialActivatingTool.name);
-        }
-        reject('Tool Selector Timeout');
-      }, 5000);
-
-      try {
-        this.createChatCompletionWithTools({
-          messages: [
-            ...messagesWithText.slice(0, -1),
-            {
-              role: 'user',
-              content: `If I type "${request}" in the last chat, and that is a request, Activate tools to handle that request (IF NEEDED!). OR NOT, JUST ANSWER "NO"\n\n'''json\n${selectableToolsText}'''\n\n`,
-            },
-          ],
-          onEnd: () => {
-            clearTimeout(timeoutId);
-            resolve();
-          },
-          onError: () => {
-            clearTimeout(timeoutId);
-            resolve();
-          },
-        });
-      } catch (e) {
-        reject(e);
-      }
+    const voteCount = 3;
+    const result = await this.createChatCompletion({
+      n: voteCount,
+      messages: [
+        ...messagesWithText.slice(0, -1),
+        {
+          role: 'user',
+          content: `If I type "${request}" in the last chat, and it's a request, print out what tool I should use.
+          # EXAMPLES  
+          \`\`\`json
+          // Request: "I want to open github.com and looking for some new interesting repositories."
+          {
+            "isNeed": true,
+            "activateTools": [getCurrentTabInfo, getTabsInfo, navigateTab, captureRequest],
+            "reason": "This request needs to move or open a new tab. and also need to capture the screen."
+          } 
+          // Request: "Hi. How are you?"
+          {
+            "isNeed": false,
+            "activateTools": [],
+            "reason": "This request doesn't need any tools."
+          }
+          // Request: "It's boring."
+          {
+            "isNeed": false,
+            "activateTools": [partyFirecrackers],
+            "reason": "This request doesn't need other tools. But you can use partyFirecrackers."
+          }
+          \`\`\`
+          \n
+          # TOOL LIST\n
+          \n
+          \`\`\`json\n${selectableToolsText}\n\n\`\`\``,
+        },
+      ],
     });
+
+    try {
+      const results = result.choices.reduce<Record<string, number>>((acc, choice) => {
+        if (choice.message.content) {
+          const content = JSON.parse(choice.message.content) as { isNeed: boolean; activateTools: string[] };
+          if (content.isNeed && content.activateTools?.length > 0) {
+            content.activateTools.forEach(toolName => {
+              acc[toolName] = (acc[toolName] ?? 0) + 1;
+            });
+          }
+        }
+        return acc;
+      }, {});
+      for (const [name, number] of Object.entries(results)) {
+        // If more than half of the votes are for a tool, activate it.
+        if (number > voteCount / 2) {
+          await toolsStorage.activateTool(name);
+        }
+      }
+      console.log('results', results);
+    } catch (e) {
+      console.log('JSON Parse Error in ToolSelector');
+      throw e;
+    }
+    //
+    // return new Promise<void>((resolve, reject) => {
+    //   const timeoutId = setTimeout(async () => {
+    //     for (const initialActivatingTool of initialActivatingTools) {
+    //       await toolsStorage.activateTool(initialActivatingTool.name);
+    //     }
+    //     reject('Tool Selector Timeout');
+    //   }, 5000);
+    //
+    //   try {
+    //     this.createChatCompletionWithTools({
+    //       messages: [
+    //         ...messagesWithText.slice(0, -1),
+    //         {
+    //           role: 'user',
+    //           content: `If I type "${request}" in the last chat, and that is a request, Activate tools to handle that request (IF NEEDED!). OR NOT, JUST ANSWER "NO"\n\n'''json\n${selectableToolsText}'''\n\n`,
+    //         },
+    //       ],
+    //       onEnd: () => {
+    //         clearTimeout(timeoutId);
+    //         resolve();
+    //       },
+    //       onError: () => {
+    //         clearTimeout(timeoutId);
+    //         resolve();
+    //       },
+    //     });
+    //   } catch (e) {
+    //     reject(e);
+    //   }
+    // });
   }
 }

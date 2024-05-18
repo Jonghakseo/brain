@@ -85,6 +85,8 @@ function calculateInputTokenPrice(token: number, model: Model) {
       return token * 0.005 * 0.001; // US$0.005 /1K tokens
     case 'gemini':
       return 0; // Free
+    default:
+      throw new Error('Invalid model');
   }
 }
 
@@ -96,5 +98,7 @@ function calculateOutputTokenPrice(token: number, model: Model) {
       return token * 0.015 * 0.001; // US$0.015 /1K tokens
     case 'gemini':
       return 0; // Free
+    default:
+      throw new Error('Invalid model');
   }
 }
