@@ -61,6 +61,7 @@ chrome.runtime.onInstalled.addListener(() => {
 });
 
 export class LLM extends BaseLLM {
+  name = 'LLM';
   skipAutoToolsSelection = false;
   scheduledMessageContent: Chat['content'] | null = null;
   persistTools = [...settingTools];
@@ -93,24 +94,24 @@ export class LLM extends BaseLLM {
     return { role: 'assistant', content: chat.content.text };
   }
 
-  private async determineModel(messages: ChatCompletionMessageParam[]) {
+  private async determineUseLowModel(messages: ChatCompletionMessageParam[]) {
     // check has image into messages
     const hasImage = messages.some(message => {
       return message.role === 'user' && message.content.some(content => content.type === 'image_url');
     });
     if (hasImage) {
-      this.model = 'gpt-4o-2024-05-13';
-      return;
+      return false;
     }
     // check has screen capture tool into active tools
     const activateTools = await toolsStorage.getActivatedTools();
     const hasImageTool = activateTools.some(tool => tool.name === 'captureRequest');
     if (hasImageTool) {
-      this.model = 'gpt-4o-2024-05-13';
-      return;
+      return false;
     }
-    this.model = 'gpt-3.5-turbo-0125';
-    return;
+    if (activateTools.length > 4) {
+      return false;
+    }
+    return true;
   }
 
   private async createChatCompletionStream(messages: ChatCompletionMessageParam[]) {
@@ -134,10 +135,13 @@ export class LLM extends BaseLLM {
       ...this.persistTools,
       ...ALL_TOOLS.filter(tool => activateTools.some(activateTool => activateTool.name === tool.function.name)),
     ];
+    console.log('PERSIST TOOLS', this.persistTools.map(tool => tool.function.name).join(', '));
+    console.log('SELECTED TOOLS', activateTools.map(tool => tool.name).join(', '));
 
     const slicedMessages = messages.slice(-forgetChatAfter);
     if (autoSelectModel) {
-      await this.determineModel(slicedMessages);
+      const useLowModel = await this.determineUseLowModel(slicedMessages);
+      this.model = useLowModel ? 'gpt-3.5-turbo' : 'gpt-4o-2024-05-13';
     }
 
     let text = '';

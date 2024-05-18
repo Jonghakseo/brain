@@ -1,6 +1,6 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { Button, Card, CardBody } from '@material-tailwind/react';
-import { Chat, conversationStorage } from '@chrome-extension-boilerplate/shared';
+import { Fragment, useCallback, useEffect, useRef, useState } from 'react';
+import { Button, Card, CardBody, IconButton, Typography } from '@material-tailwind/react';
+import { Chat, conversationStorage, settingStorage, useStorage } from '@chrome-extension-boilerplate/shared';
 import ChatBox from '@src/components/ChatBox';
 import ChatProfile from '@src/components/ChatProfile';
 import ChatSendArea from '@src/components/ChatSendArea';
@@ -14,6 +14,9 @@ type ChattingFormProps = {
 export default function ChattingForm({ chats, sendChat }: ChattingFormProps) {
   const chatListRef = useRef<HTMLUListElement>(null);
   const [loading, setLoading] = useState(false);
+  const {
+    extensionConfig: { forgetChatAfter },
+  } = useStorage(settingStorage);
 
   useChatListAutoScroll(chatListRef, chats);
   // FIXME: This is hacky way to fix chatbox markdown rendering [Object] bug
@@ -42,18 +45,22 @@ export default function ChattingForm({ chats, sendChat }: ChattingFormProps) {
           </Card>
           <ChatProfile type="ai" />
         </li>
-        {chats.map(chat => {
+        {chats.map((chat, index) => {
           const isUser = chat.type === 'user';
+          const showForgetGuideLine = index === chats.length - forgetChatAfter;
           return (
-            <li key={chat.createdAt} className="flex flex-row gap-4 items-start">
-              {!isUser && <ChatProfile type="ai" />}
-              <Card className={'w-auto max-w-[90%]' + (isUser ? ' ml-auto' : '')}>
-                <CardBody className="p-4 text-pretty">
-                  <ChatBox text={chat.content.text} image={chat.content.image} />
-                </CardBody>
-              </Card>
-              {isUser && <ChatProfile type="user" />}
-            </li>
+            <Fragment key={chat.createdAt}>
+              {showForgetGuideLine && <ForgetGuideline forgetChatAfter={forgetChatAfter} />}
+              <li className="flex flex-row gap-4 items-start">
+                {!isUser && <ChatProfile type="ai" />}
+                <Card className={'w-auto max-w-[90%]' + (isUser ? ' ml-auto' : '')}>
+                  <CardBody className="p-4 text-pretty">
+                    <ChatBox text={chat.content.text} image={chat.content.image} />
+                  </CardBody>
+                </Card>
+                {isUser && <ChatProfile type="user" />}
+              </li>
+            </Fragment>
           );
         })}
       </ul>
@@ -85,6 +92,32 @@ function ResetButton() {
         />
       </svg>
     </Button>
+  );
+}
+
+function ForgetGuideline({ forgetChatAfter }: { forgetChatAfter: number }) {
+  return (
+    <div className="flex items-center gap-2">
+      <hr className="flex-grow border-gray-900/10" />
+      <IconButton
+        size="sm"
+        color="indigo"
+        className="w-4 h-5 rounded-md"
+        onClick={() => settingStorage.updateExtensionConfig('forgetChatAfter', forgetChatAfter + 1)}>
+        ↑
+      </IconButton>
+      <hr className="flex-grow border-gray-900/10" />
+      <span className="text-gray-500">Forget before {forgetChatAfter} messages</span>
+      <hr className="flex-grow border-gray-900/10" />
+      <IconButton
+        size="sm"
+        color="indigo"
+        className="w-4 h-5 rounded-md"
+        onClick={() => settingStorage.updateExtensionConfig('forgetChatAfter', forgetChatAfter - 1)}>
+        ↓
+      </IconButton>
+      <hr className="flex-grow border-gray-900/10" />
+    </div>
   );
 }
 

@@ -8,8 +8,10 @@ import {
 } from 'openai/resources';
 import { billingInfoStorage, OpenAIConfig } from '@chrome-extension-boilerplate/shared';
 import { RunnableTools } from 'openai/lib/RunnableFunction';
+import { ChatCompletionRunner } from 'openai/lib/ChatCompletionRunner';
 
 export class BaseLLM {
+  name: string = 'BaseLLM';
   client: OpenAI;
   model: ChatModel;
   config: OpenAIConfig | null = null;
@@ -33,7 +35,25 @@ export class BaseLLM {
   protected setConfig(config: OpenAIConfig) {
     this.config = config;
   }
-  protected async createChatCompletionWithTools(messages: ChatCompletionMessageParam[]) {
+  protected async createChatCompletionWithTools({
+    messages,
+    onMessage,
+    onConnect,
+    onContent,
+    onError,
+    onFunctionCall,
+    onFunctionCallResult,
+    onEnd,
+  }: {
+    messages: ChatCompletionMessageParam[];
+    onContent?: (delta: string, snapshot: string) => void;
+    onConnect?: (runner: ChatCompletionRunner) => void;
+    onFunctionCall?: (functionCall: ChatCompletionMessage['function_call']) => void;
+    onFunctionCallResult?: (functionCallResult: string) => void;
+    onMessage?: (message: ChatCompletionMessageParam) => void;
+    onError?: (error: Error) => void;
+    onEnd?: (runner: ChatCompletionRunner) => void;
+  }) {
     if (!this.config) {
       throw new Error('config is not set');
     }
@@ -57,14 +77,32 @@ export class BaseLLM {
       },
     });
     runner
+      .on('connect', () => {
+        console.log(`[${this.name}] ` + 'connected');
+        onConnect?.(runner);
+      })
+      .on('message', message => {
+        onMessage?.(message);
+      })
+      .on('end', () => {
+        console.log(`[${this.name}] ` + 'end');
+        onEnd?.(runner);
+      })
+      .on('error', error => {
+        console.warn(`[${this.name}] ` + 'error', error);
+        onError?.(error);
+      })
+      .on('content', (contentDelta, contentSnapshot) => onContent?.(contentDelta, contentSnapshot))
       .on('functionCall', functionCall => {
-        console.log('functionCall', functionCall);
+        console.log(`[${this.name}] ` + 'functionCall', functionCall);
+        onFunctionCall?.(functionCall);
       })
       .on('functionCallResult', functionCallResult => {
-        console.log('functionCallResult', functionCallResult);
+        console.log(`[${this.name}] ` + 'functionCallResult', functionCallResult);
+        onFunctionCallResult?.(functionCallResult);
       })
       .on('totalUsage', async usage => {
-        console.log('SAVE USAGE', usage);
+        console.log(`[${this.name}] ` + 'SAVE USAGE', usage);
         await this.saveUsage(usage);
       });
 
@@ -116,23 +154,23 @@ export class BaseLLM {
         },
       })
       .on('connect', () => {
-        console.log('connected');
+        console.log(`[${this.name}] ` + 'connected');
         onConnect?.();
       })
       .on('functionCall', functionCall => {
-        console.log('functionCall', functionCall);
+        console.log(`[${this.name}] ` + 'functionCall', functionCall);
         onFunctionCall?.(functionCall);
       })
       .on('functionCallResult', functionCallResult => {
-        console.log('functionCallResult', functionCallResult);
+        console.log(`[${this.name}] ` + 'functionCallResult', functionCallResult);
         onFunctionCallResult?.(functionCallResult);
       })
       .on('message', message => {
-        console.log('message', message);
+        console.log(`[${this.name}] ` + 'message', message);
         onMessage?.(message);
       })
       .on('error', error => {
-        console.error('error', error);
+        console.warn(`[${this.name}] ` + 'error', error);
         stream.abort();
         onError?.(error);
       })

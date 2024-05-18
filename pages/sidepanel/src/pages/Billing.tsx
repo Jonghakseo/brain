@@ -18,7 +18,9 @@ export default function Billing() {
       <Typography>Total Request Count: {numberWithCommas(requestCount.total)}</Typography>
       <Typography>Request Count Input: {numberWithCommas(requestCount.input)}</Typography>
       <Typography>Request Count Output: {numberWithCommas(requestCount.output)}</Typography>
-      <Typography>Average Token per Request: {numberWithCommas(totalToken / requestCount.total || 0)}</Typography>
+      <Typography>
+        Average Token per Request: {Math.floor(numberWithCommas(totalToken / requestCount.total || 0))}
+      </Typography>
 
       <Button color="blue" size="sm" className="mt-4" onClick={billingInfoStorage.reset}>
         Reset
@@ -27,5 +29,9 @@ export default function Billing() {
   );
 }
 
-const numberWithCurrency = Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format;
+const numberWithCurrency = Intl.NumberFormat('en-US', {
+  style: 'currency',
+  currency: 'USD',
+  maximumFractionDigits: 4,
+}).format;
 const numberWithCommas = Intl.NumberFormat('en-US').format;

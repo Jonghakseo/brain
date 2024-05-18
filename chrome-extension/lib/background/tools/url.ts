@@ -19,18 +19,18 @@ async function getMyBookmarks() {
 }
 
 const GetHistoryParams = z.object({
-  recentDays: z.number().int().positive().min(1).max(30).optional(),
+  recentDays: z.number().int().positive().min(1).max(30).default(7).optional(),
   searchText: z.string().optional(),
 });
 
-async function getHistory({ recentDays = 0, searchText = '' }: z.infer<typeof GetHistoryParams>) {
+async function getHistory({ recentDays = 7, searchText = '' }: z.infer<typeof GetHistoryParams>) {
   const millisecondsPerDay = 1000 * 60 * 60 * 24;
   const daysAgoTime = new Date().getTime() - millisecondsPerDay * recentDays;
 
   const historyItems = await chrome.history.search({
     text: searchText,
     maxResults: 500,
-    startTime: recentDays ? daysAgoTime : undefined,
+    startTime: daysAgoTime,
   });
 
   const deduplicatedHistoryItems = historyItems.reduce<chrome.history.HistoryItem[]>((acc, item) => {
