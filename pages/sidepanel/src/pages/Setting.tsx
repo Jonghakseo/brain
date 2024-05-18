@@ -76,24 +76,6 @@ export default function Setting() {
               settingStorage.updateOpenAIConfig('presencePenalty', e.target.valueAsNumber);
             }}
           />
-          <Typography as="h2" className="text-xl font-semibold">
-            Experiment Config
-          </Typography>
-
-          <Switch
-            label="Auto Tool Selection"
-            checked={extensionConfig.autoToolSelection}
-            onChange={e => {
-              settingStorage.updateExtensionConfig('autoToolSelection', e.currentTarget.checked);
-            }}
-          />
-          <Switch
-            label="Auto Switch GPT3.5 Turbo (detault: GPT4o)"
-            checked={extensionConfig.autoSelectModel}
-            onChange={e => {
-              settingStorage.updateExtensionConfig('autoSelectModel', e.currentTarget.checked);
-            }}
-          />
         </div>
         <div className="flex flex-col gap-4">
           <Typography as="h2" className="text-xl font-semibold">
@@ -122,16 +104,34 @@ export default function Setting() {
           />
           <Switch
             label="Chat with Capture"
-            checked={extensionConfig.autoCapture}
+            defaultChecked={extensionConfig.autoCapture}
             onChange={e => {
               settingStorage.updateExtensionConfig('autoCapture', e.currentTarget.checked);
             }}
           />
           <Switch
             label="Use Only Latest Image"
-            checked={extensionConfig.useLatestImage}
+            defaultChecked={extensionConfig.useLatestImage}
             onChange={e => {
               settingStorage.updateExtensionConfig('useLatestImage', e.currentTarget.checked);
+            }}
+          />
+          <Typography as="h2" className="text-xl font-semibold">
+            Experiment Config
+          </Typography>
+
+          <Switch
+            label="Auto Tool Selection"
+            defaultChecked={extensionConfig.autoToolSelection}
+            onChange={e => {
+              settingStorage.updateExtensionConfig('autoToolSelection', e.currentTarget.checked);
+            }}
+          />
+          <Switch
+            label="Auto Switch GPT3.5 Turbo (detault: GPT4o)"
+            defaultChecked={extensionConfig.autoSelectModel}
+            onChange={e => {
+              settingStorage.updateExtensionConfig('autoSelectModel', e.currentTarget.checked);
             }}
           />
         </div>

@@ -129,10 +129,9 @@ export class LLM extends BaseLLM {
         const functionName = camelCaseToSentence(functionCall.name);
         conversationStorage.updateAIChat(
           createdAt,
-          text ? `${text}\n\`${functionName}...\`` : `\`${functionName}\`` + '  ' + LOADING_PLACEHOLDER,
+          text ? `${text}\n${functionName}...` : `${functionName}` + '  ' + LOADING_PLACEHOLDER,
         );
         if (functionCall.name === 'captureRequest') {
-          conversationStorage.deleteChat(createdAt);
           this.scheduleScreenCaptureMessage();
         }
       },
@@ -227,6 +226,8 @@ export class LLM extends BaseLLM {
     this.scheduledMessageContent = null;
     this.skipAutoToolsSelection = true;
     await conversationStorage.saveUserChat(messageContent);
+    const createdAt = await conversationStorage.getLastAIChat();
+    await conversationStorage.deleteChat(createdAt);
     await this.chatCompletionWithHistory(messageContent, history);
     this.skipAutoToolsSelection = false;
   }
