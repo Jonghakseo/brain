@@ -1,10 +1,8 @@
 import { BaseStorage, createStorage, StorageType } from './base';
 
 type Setting = {
-  openaiConfig: {
+  llmConfig: {
     systemPrompt: string;
-    frequencyPenalty: number;
-    presencePenalty: number;
     maxTokens: number;
     topP: number;
     temperature: number;
@@ -19,12 +17,12 @@ type Setting = {
   };
 };
 
-export type OpenAIConfig = Setting['openaiConfig'];
+export type LLMConfig = Setting['llmConfig'];
 
 type ThemeStorage = BaseStorage<Setting> & {
-  updateOpenAIConfig: <K extends keyof Setting['openaiConfig']>(
+  updateLLMConfig: <K extends keyof Setting['llmConfig']>(
     settingKey: K,
-    value: Setting['openaiConfig'][K],
+    value: Setting['llmConfig'][K],
   ) => Promise<void>;
   updateExtensionConfig: <K extends keyof Setting['extensionConfig']>(
     settingKey: K,
@@ -33,12 +31,10 @@ type ThemeStorage = BaseStorage<Setting> & {
 };
 
 const storage = createStorage<Setting>(
-  'setting',
+  'settings',
   {
-    openaiConfig: {
-      systemPrompt: 'You are chrome browser OpenAI assistant.',
-      frequencyPenalty: 0,
-      presencePenalty: 0,
+    llmConfig: {
+      systemPrompt: 'You are chrome browser AI assistant.',
       maxTokens: 300,
       topP: 1,
       temperature: 0.7,
@@ -60,12 +56,12 @@ const storage = createStorage<Setting>(
 
 export const settingStorage: ThemeStorage = {
   ...storage,
-  updateOpenAIConfig: async (settingKey, value) => {
+  updateLLMConfig: async (settingKey, value) => {
     await storage.set(currentSetting => {
       return {
         ...currentSetting,
-        openaiConfig: {
-          ...currentSetting.openaiConfig,
+        llmConfig: {
+          ...currentSetting.llmConfig,
           [settingKey]: value,
         },
       };

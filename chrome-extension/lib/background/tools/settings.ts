@@ -2,27 +2,25 @@ import { z } from 'zod';
 import { zodFunction } from './zodFunction';
 import { settingStorage, toolsStorage } from '@chrome-extension-boilerplate/shared';
 
-async function getOpenAiConfig() {
-  const { openaiConfig } = await settingStorage.get();
-  return openaiConfig;
+async function getAiConfig() {
+  const { llmConfig } = await settingStorage.get();
+  return llmConfig;
 }
 
-const UpdateOpenAiConfigSchema = z.object({
-  frequencyPenalty: z.number().min(0).max(2),
-  presencePenalty: z.number().min(0).max(2),
+const UpdateAiConfigSchema = z.object({
   maxTokens: z.number().min(1).max(4096),
   topP: z.number().min(0).max(1),
   temperature: z.number().min(0).max(2),
 });
 
-async function updateOpenAiConfig(params: z.infer<typeof UpdateOpenAiConfigSchema>) {
+async function updateAiConfig(params: z.infer<typeof UpdateAiConfigSchema>) {
   for await (const key of Object.keys(params)) {
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore
-    await settingStorage.updateOpenAIConfig(key, params[key]);
+    await settingStorage.updateLLMConfig(key, params[key]);
   }
-  const { openaiConfig } = await settingStorage.get();
-  return openaiConfig;
+  const { llmConfig } = await settingStorage.get();
+  return llmConfig;
 }
 
 const getMyTools = async () => {
@@ -62,13 +60,13 @@ export const settingTools = [
     description: 'Toggle activation of a tool',
   }),
   zodFunction({
-    function: getOpenAiConfig,
+    function: getAiConfig,
     schema: z.object({}),
-    description: 'Get This OpenAI(LLM) config',
+    description: 'Get This AI(LLM) config',
   }),
   zodFunction({
-    function: updateOpenAiConfig,
-    schema: UpdateOpenAiConfigSchema,
-    description: 'Update OpenAI(LLM) config and return the updated config',
+    function: updateAiConfig,
+    schema: UpdateAiConfigSchema,
+    description: 'Update AI(LLM) config and return the updated config',
   }),
 ];

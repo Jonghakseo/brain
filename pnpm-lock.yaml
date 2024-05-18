@@ -93,6 +93,9 @@ importers:
 
   chrome-extension:
     dependencies:
+      '@google/generative-ai':
+        specifier: ^0.11.3
+        version: 0.11.3
       dotenv:
         specifier: ^16.4.5
         version: 16.4.5
@@ -649,6 +652,10 @@ packages:
 
   '@floating-ui/utils@0.2.2':
     resolution: {integrity: sha512-J4yDIIthosAsRZ5CPYP/jQvUAQtlZTTD/4suA08/FEnlxqW3sKS9iAhgsa9VYLZ6vDHn/ixJgIqRQPotoBjxIw==}
+
+  '@google/generative-ai@0.11.3':
+    resolution: {integrity: sha512-QtQ1hz6rcybbw35uxXlFF26KNnaTVr2oWwnmDkC1M35KdzN4tVc4wakgJp8uXbY9KDCNHksyp11DbFg0HPckZQ==}
+    engines: {node: '>=18.0.0'}
 
   '@humanwhocodes/config-array@0.11.14':
     resolution: {integrity: sha512-3T8LkOmg45BV5FICb15QQMsyUSWrQ8AygVfC7ZG32zOalnqrilm018ZVCw0eapXux8FtA33q8PSRSstjee3jSg==}
@@ -3747,6 +3754,8 @@ snapshots:
       tabbable: 6.2.0
 
   '@floating-ui/utils@0.2.2': {}
+
+  '@google/generative-ai@0.11.3': {}
 
   '@humanwhocodes/config-array@0.11.14':
     dependencies:

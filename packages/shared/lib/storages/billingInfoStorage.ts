@@ -14,14 +14,16 @@ type BillingInfo = {
   };
 };
 
+type Model = 'gpt-3.5-turbo' | 'gpt-4o' | 'gemini';
+
 type BillingInfoStorage = BaseStorage<BillingInfo> & {
-  addInputTokens: (token: number, isGPT3?: boolean) => Promise<void>;
-  addOutputTokens: (token: number, isGPT3?: boolean) => Promise<void>;
+  addInputTokens: (token: number, model: Model) => Promise<void>;
+  addOutputTokens: (token: number, model: Model) => Promise<void>;
   reset: () => Promise<void>;
 };
 
 const storage = createStorage<BillingInfo>(
-  'billing-storage',
+  'billings',
   {
     totalPrice: 0,
     totalToken: 0,
@@ -43,9 +45,9 @@ export const billingInfoStorage: BillingInfoStorage = {
       requestCount: { total: 0, input: 0, output: 0 },
     });
   },
-  addInputTokens: async (tokens, isGPT3) => {
+  addInputTokens: async (tokens, model) => {
     await storage.set(prev => ({
-      totalPrice: prev.totalPrice + calculateInputTokenPrice(tokens, isGPT3),
+      totalPrice: prev.totalPrice + calculateInputTokenPrice(tokens, model),
       totalToken: prev.totalToken + tokens,
       tokenUsageInfo: {
         ...prev.tokenUsageInfo,
@@ -58,9 +60,9 @@ export const billingInfoStorage: BillingInfoStorage = {
       },
     }));
   },
-  addOutputTokens: async (tokens, isGPT3) => {
+  addOutputTokens: async (tokens, model) => {
     await storage.set(prev => ({
-      totalPrice: prev.totalPrice + calculateOutputTokenPrice(tokens, isGPT3),
+      totalPrice: prev.totalPrice + calculateOutputTokenPrice(tokens, model),
       totalToken: prev.totalToken + tokens,
       tokenUsageInfo: {
         ...prev.tokenUsageInfo,
@@ -75,16 +77,24 @@ export const billingInfoStorage: BillingInfoStorage = {
   },
 };
 
-function calculateInputTokenPrice(token: number, isGPT3?: boolean) {
-  if (isGPT3) {
-    return token * 0.0005 * 0.001; // US$0.0005 /1K tokens
+function calculateInputTokenPrice(token: number, model: Model) {
+  switch (model) {
+    case 'gpt-3.5-turbo':
+      return token * 0.0005 * 0.001; // US$0.0005 /1K tokens
+    case 'gpt-4o':
+      return token * 0.005 * 0.001; // US$0.005 /1K tokens
+    case 'gemini':
+      return 0; // Free
   }
-  return token * 0.005 * 0.001; // US$0.005 /1K tokens
 }
 
-function calculateOutputTokenPrice(token: number, isGPT3?: boolean) {
-  if (isGPT3) {
-    return token * 0.0015 * 0.001; // US$0.0015 /1K tokens
+function calculateOutputTokenPrice(token: number, model: Model) {
+  switch (model) {
+    case 'gpt-3.5-turbo':
+      return token * 0.0015 * 0.001; // US$0.0015 /1K tokens
+    case 'gpt-4o':
+      return token * 0.015 * 0.001; // US$0.015 /1K tokens
+    case 'gemini':
+      return 0; // Free
   }
-  return token * 0.015 * 0.001; // US$0.015 /1K tokens
 }

@@ -1,26 +1,25 @@
-import { BaseLLM } from '@lib/background/agents/base';
 import { toolsStorage } from '@chrome-extension-boilerplate/shared';
 import { zodFunction } from '@lib/background/tools';
 import { z } from 'zod';
 import { ChatCompletionMessageParam, ChatCompletionUserMessageParam } from 'openai/resources';
+import { OpenAiLLM } from '@lib/background/agents/openai';
+import { replaceImageMessages } from '@lib/background/agents/converters';
 
-export class ToolSelector extends BaseLLM {
+export class ToolSelector extends OpenAiLLM {
   name = 'ToolSelector';
 
-  constructor(key: string) {
-    super(key);
+  constructor() {
+    super();
     this.toolChoice = 'required';
-    this.model = 'gpt-3.5-turbo-0125';
+    this.model = 'gpt-3.5-turbo';
     // this.model = 'gpt-4o-2024-05-13';
-    this.setConfig({
+    this.config = {
       temperature: 0.2,
       topP: 0.2,
       maxTokens: 2000,
-      frequencyPenalty: 0,
-      presencePenalty: 0,
       systemPrompt:
         'You are a tool selector assistant. Please activate the necessary tools perfectly. Think step by step.',
-    });
+    };
   }
 
   async selectTool(messages: ChatCompletionMessageParam[]) {
@@ -67,7 +66,7 @@ export class ToolSelector extends BaseLLM {
       }),
     ];
 
-    const messagesWithText = this.replaceImageMessages(messages);
+    const messagesWithText = replaceImageMessages(messages);
 
     const lastMyMessage = messagesWithText.at(-1);
     if (lastMyMessage === undefined) {

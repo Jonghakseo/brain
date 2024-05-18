@@ -3,6 +3,8 @@ import 'webextension-polyfill';
 import type { Message } from '@chrome-extension-boilerplate/shared';
 import { LLM } from '@lib/background/llm';
 import { Screen } from '@lib/background/program/Screen';
+import { GoogleLLM } from '@lib/background/agents/google';
+import { OpenAiLLM } from '@lib/background/agents/openai';
 
 /**
  * when click the extension icon, open(or close) the side panel automatically
@@ -31,7 +33,8 @@ chrome.runtime.onConnect.addListener(port => {
           break;
         }
         case 'Chat': {
-          const llm = new LLM(process.env.OPENAI_KEY as string);
+          const baseLLM = new OpenAiLLM();
+          const llm = new LLM(baseLLM);
           if (message.payload.history) {
             await llm.chatCompletionWithHistory(message.payload.content, message.payload.history);
           } else {
@@ -42,6 +45,7 @@ chrome.runtime.onConnect.addListener(port => {
         }
       }
     } catch (e) {
+      console.warn('Error in background script', e);
       sendResponse({ type: (message.type + '__Error') as Message['type'], response: e as string });
     }
   });

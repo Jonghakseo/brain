@@ -3,7 +3,7 @@ import { Input, Switch, Textarea, Typography } from '@material-tailwind/react';
 import { settingStorage, useStorage } from '@chrome-extension-boilerplate/shared';
 
 export default function Setting() {
-  const { openaiConfig, extensionConfig } = useStorage(settingStorage);
+  const { llmConfig, extensionConfig } = useStorage(settingStorage);
   return (
     <Layout>
       <Typography as="h1" className="text-2xl font-semibold">
@@ -12,13 +12,13 @@ export default function Setting() {
       <section className="flex mt-4 gap-y-4 gap-x-6 flex-wrap">
         <div className="flex flex-col gap-4">
           <Typography as="h2" className="text-xl font-semibold">
-            OpenAI Config
+            AI(LLM) Config
           </Typography>
           <Textarea
             label="System Prompt"
-            defaultValue={openaiConfig.systemPrompt}
+            defaultValue={llmConfig.systemPrompt}
             onChange={e => {
-              settingStorage.updateOpenAIConfig('systemPrompt', e.target.value);
+              settingStorage.updateLLMConfig('systemPrompt', e.target.value);
             }}
           />
           <Input
@@ -27,9 +27,9 @@ export default function Setting() {
             max={2}
             min={0}
             type="number"
-            value={openaiConfig.temperature}
+            value={llmConfig.temperature}
             onChange={e => {
-              settingStorage.updateOpenAIConfig('temperature', e.target.valueAsNumber);
+              settingStorage.updateLLMConfig('temperature', e.target.valueAsNumber);
             }}
           />
           <Input
@@ -38,9 +38,9 @@ export default function Setting() {
             max={1}
             min={0}
             type="number"
-            value={openaiConfig.topP}
+            value={llmConfig.topP}
             onChange={e => {
-              settingStorage.updateOpenAIConfig('topP', e.target.valueAsNumber);
+              settingStorage.updateLLMConfig('topP', e.target.valueAsNumber);
             }}
           />
           <Input
@@ -49,31 +49,9 @@ export default function Setting() {
             step={1}
             max={4095}
             type="number"
-            value={openaiConfig.maxTokens}
+            value={llmConfig.maxTokens}
             onChange={e => {
-              settingStorage.updateOpenAIConfig('maxTokens', e.target.valueAsNumber);
-            }}
-          />
-          <Input
-            label="Frequency Penalty"
-            step={0.1}
-            max={2}
-            min={0}
-            type="number"
-            value={openaiConfig.frequencyPenalty}
-            onChange={e => {
-              settingStorage.updateOpenAIConfig('frequencyPenalty', e.target.valueAsNumber);
-            }}
-          />
-          <Input
-            label="Presence Penalty"
-            step={0.1}
-            max={2}
-            min={0}
-            type="number"
-            value={openaiConfig.presencePenalty}
-            onChange={e => {
-              settingStorage.updateOpenAIConfig('presencePenalty', e.target.valueAsNumber);
+              settingStorage.updateLLMConfig('maxTokens', e.target.valueAsNumber);
             }}
           />
         </div>

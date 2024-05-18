@@ -2,7 +2,7 @@ import { createStorage, StorageType, type BaseStorage, SessionAccessLevel } from
 import { exampleThemeStorage } from './exampleThemeStorage';
 import { conversationStorage, LOADING_PLACEHOLDER } from './conversationStorage';
 import { billingInfoStorage } from './billingInfoStorage';
-import { settingStorage, type OpenAIConfig } from './settingStorage';
+import { settingStorage, type LLMConfig } from './settingStorage';
 import { toolsStorage } from './toolsStorage';
 
 export {
@@ -11,7 +11,7 @@ export {
   conversationStorage,
   billingInfoStorage,
   settingStorage,
-  OpenAIConfig,
+  LLMConfig,
   toolsStorage,
   createStorage,
   StorageType,

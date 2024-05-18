@@ -20,7 +20,7 @@ type ConversationStorage = BaseStorage<Conversation> & {
 };
 
 const storage = createStorage<Conversation>(
-  'conversation-storage-key',
+  'conversations',
   { chats: [] },
   {
     storageType: StorageType.Local,

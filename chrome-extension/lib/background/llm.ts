@@ -21,8 +21,9 @@ import {
   urlTools,
 } from '@lib/background/tools';
 import { Screen } from '@lib/background/program/Screen';
-import { BaseLLM } from '@lib/background/agents/base';
 import { ToolSelector } from '@lib/background/agents/toolSelector';
+import { BaseLLM } from '@lib/background/agents/base';
+import { replaceImageMessages, splitArrayByIndex } from '@lib/background/agents/converters';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const ALL_TOOLS = [
@@ -60,14 +61,14 @@ chrome.runtime.onInstalled.addListener(() => {
   ]);
 });
 
-export class LLM extends BaseLLM {
-  name = 'LLM';
+export class LLM {
+  llm: BaseLLM;
   skipAutoToolsSelection = false;
   scheduledMessageContent: Chat['content'] | null = null;
   persistTools = [...settingTools];
 
-  constructor(key: string) {
-    super(key);
+  constructor(llm: BaseLLM) {
+    this.llm = llm;
   }
 
   async chatCompletion(chatContent: Chat['content']) {
@@ -90,12 +91,12 @@ export class LLM extends BaseLLM {
   }
 
   private async createChatCompletionStream(_messages: ChatCompletionMessageParam[]) {
-    const { openaiConfig, extensionConfig } = await settingStorage.get();
+    const { llmConfig, extensionConfig } = await settingStorage.get();
     const { forgetChatAfter, autoSelectModel, useLatestImage, autoToolSelection } = extensionConfig;
 
     let messages = _messages.slice(-forgetChatAfter);
 
-    this.setConfig(openaiConfig);
+    this.llm.config = llmConfig;
 
     const createdAt = await conversationStorage.startAIChat();
 
@@ -110,7 +111,7 @@ export class LLM extends BaseLLM {
     // Auto select model by messages. It depends on autoSelectModel setting
     if (autoSelectModel) {
       const useLowModel = await this.determineUseLowModel(messages);
-      this.model = useLowModel ? 'gpt-3.5-turbo' : 'gpt-4o-2024-05-13';
+      this.llm.model = useLowModel ? 'gpt-3.5-turbo' : 'gpt-4o-2024-05-13';
     }
 
     // Remove all images except last image
@@ -118,9 +119,9 @@ export class LLM extends BaseLLM {
       messages = await this.getMessagesWithoutImagesExceptLast(messages);
     }
 
-    console.log('ACTIVATED TOOLS', this.tools.map(tool => tool.function.name).join(', '));
+    console.log('ACTIVATED TOOLS', this.llm.tools.map(tool => tool.function.name).join(', '));
     let text = '';
-    const result = await this.createChatCompletionStreamWithTools({
+    await this.llm.createChatCompletionStreamWithTools({
       messages,
       onContent: delta => {
         text += delta;
@@ -143,7 +144,6 @@ export class LLM extends BaseLLM {
 
     return {
       createdAt,
-      content: result.choices.at(0)?.message.content,
     };
   }
 
@@ -194,7 +194,7 @@ export class LLM extends BaseLLM {
       return;
     }
     try {
-      const selector = new ToolSelector(this.client.apiKey);
+      const selector = new ToolSelector();
       await selector.selectTool(messages);
     } catch (e) {
       console.warn('Error in AutoToolDetection', e);
@@ -203,7 +203,7 @@ export class LLM extends BaseLLM {
 
   private async setThisToolsByActivate() {
     const activateTools = await toolsStorage.getActivatedTools();
-    this.tools = [
+    this.llm.tools = [
       ...this.persistTools,
       ...ALL_TOOLS.filter(tool => activateTools.some(activateTool => activateTool.name === tool.function.name)),
     ];
@@ -215,7 +215,7 @@ export class LLM extends BaseLLM {
       return messages;
     }
     const [before, after] = splitArrayByIndex(messages, lastImageMessageIndex);
-    return [...this.replaceImageMessages(before), ...after];
+    return [...replaceImageMessages(before), ...after];
   }
 
   private async scheduleScreenCaptureMessage() {
@@ -237,12 +237,19 @@ export class LLM extends BaseLLM {
     await this.chatCompletionWithHistory(messageContent, history);
     this.skipAutoToolsSelection = false;
   }
+
+  findLastImageMessageIndex(messages: ChatCompletionMessageParam[]) {
+    for (let i = messages.length - 1; i >= 0; i--) {
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
+      if (messages[i].role === 'user' && messages[i].content.some(content => content.type === 'image_url')) {
+        return i;
+      }
+    }
+    return -1;
+  }
 }
 
 function makeUserChat(content: Chat['content']) {
   return { type: 'user', content, createdAt: Date.now() } as const;
-}
-
-function splitArrayByIndex<T>(array: T[], index: number) {
-  return [array.slice(0, index), array.slice(index)] as const;
 }

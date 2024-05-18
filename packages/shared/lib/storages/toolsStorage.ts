@@ -21,7 +21,7 @@ type ToolsStorage = BaseStorage<Tools> & {
   toggleAllByCategory: (category: string, isActive: boolean) => Promise<void>;
 };
 
-const storage = createStorage<Tools>('tools-storage-key', [], {
+const storage = createStorage<Tools>('tools', [], {
   storageType: StorageType.Local,
   liveUpdate: true,
 });
