@@ -1,7 +1,7 @@
 import Markdown from 'react-markdown';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { useState } from 'react';
-import { Button, IconButton, Spinner } from '@material-tailwind/react';
+import { Button, IconButton, Spinner, Typography } from '@material-tailwind/react';
 import ImageViewModal from '@src/components/ImageViewModal';
 import remarkGfm from 'remark-gfm';
 import { Chat, LOADING_PLACEHOLDER } from '@chrome-extension-boilerplate/shared';
@@ -27,9 +27,10 @@ export default function ChatBox({ className = '', image, text }: ChatBoxProps) {
       )}
       {image && <ImageViewModal image={image} isOpen={isOpen} onClose={() => setIsOpen(false)} />}
       <Markdown
-        className="whitespace-normal break-words max-w-full"
+        className="whitespace-normal node break-words max-w-full"
         remarkPlugins={[remarkGfm]}
         components={{
+          ...headerHandlers,
           a({ children, ...rest }) {
             return (
               <a target="_blank" className="text-blue-500 underline" {...rest}>
@@ -85,6 +86,20 @@ export default function ChatBox({ className = '', image, text }: ChatBoxProps) {
     </div>
   );
 }
+
+const headerHandlers = ['h1', 'h2', 'h3', 'h4', 'h5', 'h6'].reduce((handlerObj, header) => {
+  // eslint-disable-next-line
+  // @ts-ignore
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  handlerObj[header] = ({ children, node, ...rest }) => (
+    // eslint-disable-next-line
+    // @ts-ignore
+    <Typography as={header} className="font-semibold" {...rest}>
+      {children}
+    </Typography>
+  );
+  return handlerObj;
+}, {});
 
 function CopyToClipboardIconButton({ copyText }: { copyText: string }) {
   const copyToClipboard = () => {

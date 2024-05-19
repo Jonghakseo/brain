@@ -3,7 +3,6 @@ import 'webextension-polyfill';
 import type { Message } from '@chrome-extension-boilerplate/shared';
 import { LLM } from '@lib/background/llm';
 import { Screen } from '@lib/background/program/Screen';
-import { GoogleLLM } from '@lib/background/agents/google';
 import { OpenAiLLM } from '@lib/background/agents/openai';
 
 /**
@@ -35,13 +34,23 @@ chrome.runtime.onConnect.addListener(port => {
         case 'Chat': {
           const baseLLM = new OpenAiLLM();
           const llm = new LLM(baseLLM);
-          if (message.payload.history) {
-            await llm.chatCompletionWithHistory(message.payload.content, message.payload.history);
-          } else {
-            await llm.chatCompletion(message.payload.content);
-          }
-
+          await llm.chatCompletionWithHistory(message.payload.content, message.payload.history ?? []);
           sendResponse({ type: 'Chat', response: null });
+          break;
+        }
+        // case 'GenerateProgram': {
+        //   const baseLLM = new OpenAiLLM();
+        //   const llm = new LLM(baseLLM);
+        //   // const generated = await llm.generateProgram(message.payload.programId);
+        //   // sendResponse({ type: 'GenerateProgram', response: generated });
+        //   break;
+        // }
+        case 'RunProgram': {
+          const baseLLM = new OpenAiLLM();
+          const llm = new LLM(baseLLM);
+          const program = await llm.runProgram(message.payload.programId);
+          sendResponse({ type: 'RunProgram', response: program });
+          break;
         }
       }
     } catch (e) {

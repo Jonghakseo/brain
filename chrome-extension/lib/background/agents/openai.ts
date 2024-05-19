@@ -18,7 +18,7 @@ export class OpenAiLLM implements BaseLLM {
   config: LLMConfig | null = null;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   tools: RunnableTools<any[]> = [];
-  toolChoice: 'required' | 'auto' = 'auto';
+  toolChoice: 'required' | 'auto' | 'none' = 'auto';
   isJson = false;
 
   constructor() {
@@ -28,7 +28,11 @@ export class OpenAiLLM implements BaseLLM {
   }
 
   log(...args: Parameters<typeof console.log>) {
-    console.log(`[${this.name + ' ' + this.model}] `, ...args);
+    try {
+      console.log(`[${this.name + ' ' + this.model}] `, ...args);
+    } catch (e) {
+      console.warn('Error in openai log', e);
+    }
   }
 
   async saveUsage(usage: ChatCompletion['usage']) {
@@ -37,7 +41,23 @@ export class OpenAiLLM implements BaseLLM {
     completion_tokens && (await billingInfoStorage.addOutputTokens(completion_tokens, this.model));
   }
 
-  async createChatCompletion({ messages, n }: { messages: ChatCompletionMessageParam[]; n?: number }) {
+  async createChatCompletion({
+    messages,
+    n,
+    onMessage,
+    onContent,
+    onError,
+  }: {
+    messages: ChatCompletionMessageParam[];
+    n?: number;
+    onContent?: (delta: string) => void;
+    onConnect?: (runner?: ChatCompletionRunner) => void;
+    onFunctionCall?: (functionCall: ChatCompletionMessage['function_call']) => void;
+    onFunctionCallResult?: (functionCallResult: string) => void;
+    onMessage?: (message: ChatCompletionMessageParam) => void;
+    onError?: (error: Error) => void;
+    onEnd?: (runner: ChatCompletionRunner) => void;
+  }) {
     if (!this.config) {
       throw new Error('config is not set');
     }
@@ -47,28 +67,36 @@ export class OpenAiLLM implements BaseLLM {
       role: 'system',
       content: systemPrompt,
     };
+    try {
+      const result = await this.client.chat.completions.create({
+        model: this.model,
+        messages: [systemMessage, ...messages],
+        n,
+        temperature,
+        max_tokens: maxTokens,
+        top_p: topP,
+        response_format: {
+          type: this.isJson ? 'json_object' : 'text',
+        },
+      });
 
-    const result = await this.client.chat.completions.create({
-      model: this.model,
-      messages: [systemMessage, ...messages],
-      n,
-      temperature,
-      max_tokens: maxTokens,
-      top_p: topP,
-      response_format: {
-        type: this.isJson ? 'json_object' : 'text',
-      },
-    });
+      if (result.usage) {
+        await this.saveUsage(result.usage);
+      }
 
-    if (result.usage) {
-      await this.saveUsage(result.usage);
+      for (const choice of result.choices) {
+        onMessage?.(choice.message);
+        onContent?.(choice.message.content ?? '');
+        this.log('message', choice.message.content);
+      }
+
+      return result;
+    } catch (e) {
+      if (e instanceof Error) {
+        onError?.(e);
+      }
+      throw e;
     }
-
-    for (const choice of result.choices) {
-      this.log('message', choice.message.content);
-    }
-
-    return result;
   }
 
   async createChatCompletionWithTools({
@@ -90,6 +118,11 @@ export class OpenAiLLM implements BaseLLM {
     onError?: (error: Error) => void;
     onEnd?: (runner: ChatCompletionRunner) => void;
   }) {
+    // FIXME: temporary fix for empty tool usage
+    if (this.tools.length === 0) {
+      // TODO: make stream
+      return this.createChatCompletion({ messages });
+    }
     if (!this.config) {
       throw new Error('config is not set');
     }
@@ -98,6 +131,7 @@ export class OpenAiLLM implements BaseLLM {
       role: 'system',
       content: systemPrompt,
     };
+
     const runner = this.client.beta.chat.completions.runTools({
       model: this.model,
       messages: [systemMessage, ...messages],
@@ -132,7 +166,7 @@ export class OpenAiLLM implements BaseLLM {
         onFunctionCall?.(functionCall);
       })
       .on('functionCallResult', functionCallResult => {
-        this.log('functionCallResult', functionCallResult);
+        this.log('functionCallResult', { response: JSON.parse(functionCallResult) });
         onFunctionCallResult?.(functionCallResult);
       })
       .on('totalUsage', async usage => {
@@ -194,7 +228,7 @@ export class OpenAiLLM implements BaseLLM {
         onFunctionCall?.(functionCall);
       })
       .on('functionCallResult', functionCallResult => {
-        this.log('functionCallResult', functionCallResult);
+        this.log('functionCallResult', { response: JSON.parse(functionCallResult) });
         onFunctionCallResult?.(functionCallResult);
       })
       .on('message', message => {

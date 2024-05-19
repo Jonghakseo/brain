@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { zodFunction } from './zodFunction';
-import { settingStorage, toolsStorage } from '@chrome-extension-boilerplate/shared';
+import { toolsStorage } from '@chrome-extension-boilerplate/shared';
 
 const getMyTools = async () => {
   return toolsStorage.getTools();

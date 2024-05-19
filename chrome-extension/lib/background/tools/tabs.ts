@@ -9,6 +9,7 @@ const TabInfo = z.object({
   height: z.number().optional(),
   groupId: z.number(),
   windowId: z.number().optional(),
+  lastAccessed: z.number().optional(),
 });
 
 function convertTabToTabInfo({
@@ -19,8 +20,9 @@ function convertTabToTabInfo({
   width,
   height,
   windowId,
+  lastAccessed,
 }: chrome.tabs.Tab): z.infer<typeof TabInfo> {
-  return { id, url, groupId, title, width, height, windowId };
+  return { id, url, groupId, title, width, height, windowId, lastAccessed };
 }
 
 const GetTabsInfoParams = z.object({
@@ -136,6 +138,7 @@ async function tabGroup(params: z.infer<typeof TabGroupParams>) {
 const TabCreateOrRemoveParams = z.object({
   action: z.enum(['create', 'remove']),
   url: z.string().optional(),
+  urls: z.array(z.string()).optional(),
   tabIds: z.array(z.number()).optional(),
 });
 
@@ -143,7 +146,12 @@ async function tabCreateOrRemove(params: z.infer<typeof TabCreateOrRemoveParams>
   try {
     switch (params.action) {
       case 'create':
-        await chrome.tabs.create({ url: params.url });
+        if (params.urls && params.urls.length > 0) {
+          for (const url of params.urls) {
+            await chrome.tabs.create({ url });
+          }
+        }
+        params.url && (await chrome.tabs.create({ url: params.url }));
         break;
       case 'remove':
         if (!params.tabIds?.length) {
@@ -159,7 +167,7 @@ async function tabCreateOrRemove(params: z.infer<typeof TabCreateOrRemoveParams>
   }
 }
 
-async function GetAllTabGroups() {
+async function getAllTabGroups() {
   const tabGroups = await chrome.tabGroups.query({});
   return tabGroups.map(({ id, title, color, collapsed }) => {
     return { id, title, color, collapsed };
@@ -221,7 +229,7 @@ export const tabsTools = [
     description: 'Create or remove tabs.',
   }),
   zodFunction({
-    function: GetAllTabGroups,
+    function: getAllTabGroups,
     schema: z.object({}),
     description: 'Get all tab groups.',
   }),

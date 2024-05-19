@@ -48,6 +48,7 @@ export class ToolSelector extends OpenAiLLM {
         {
           role: 'user',
           content: `If I type ["${request}"] in the last chat, and it's a request, print out what tool I should use. Please tell me the necessary tools perfectly. Think carefully.
+          WHEN YOU USE CAPTURE REQUEST PLEASE THINK CAREFULLY IT IS A EXPENSIVE TOOL.
 # REQUEST
 |> ${request}
 

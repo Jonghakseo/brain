@@ -20,7 +20,22 @@ export interface ChatMessage extends BaseMessage {
   response: null;
 }
 
-export type Message = CaptureMessage | ChatMessage;
+// export interface GenerateProgramMessage extends BaseMessage {
+//   type: 'GenerateProgram';
+//   payload: {
+//     programId: string;
+//   };
+//   response: unknown;
+// }
+export interface RunProgramMessage extends BaseMessage {
+  type: 'RunProgram';
+  payload: {
+    programId: string;
+  };
+  response: unknown;
+}
+
+export type Message = CaptureMessage | ChatMessage | RunProgramMessage;
 
 export interface PartyEffectMessage extends BaseMessage {
   type: 'partyEffect'; // only celebrate

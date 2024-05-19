@@ -11,7 +11,7 @@ type ChattingFormProps = {
   sendChat: (content: Chat['content']) => Promise<void>;
 };
 
-export default function ChattingForm({ chats, sendChat }: ChattingFormProps) {
+function ChattingForm({ chats, sendChat }: ChattingFormProps) {
   const chatListRef = useRef<HTMLUListElement>(null);
   const [loading, setLoading] = useState(false);
   const {
@@ -70,6 +70,8 @@ export default function ChattingForm({ chats, sendChat }: ChattingFormProps) {
     </div>
   );
 }
+
+export default ChattingForm;
 
 function ResetButton() {
   return (

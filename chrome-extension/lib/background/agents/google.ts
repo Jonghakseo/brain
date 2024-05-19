@@ -25,9 +25,17 @@ export class GoogleLLM implements BaseLLM {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   tools: RunnableTools<any[]> = [];
   toolChoice: 'required' | 'auto' = 'required';
+  isJson = false;
 
   constructor() {
     this.sdk = new GoogleGenerativeAI(String(process.env.GOOGLEAI_KEY));
+  }
+  log(...args: Parameters<typeof console.log>) {
+    try {
+      console.log(`[${this.name}] `, ...args);
+    } catch (e) {
+      console.warn('Error in google log', e);
+    }
   }
 
   async createChatCompletionStreamWithTools({
@@ -237,7 +245,7 @@ export class GoogleLLM implements BaseLLM {
     onFunctionCallResult?: (functionCallResult: string) => void;
     onMessage?: (message: ChatCompletionMessageParam) => void;
     onError?: (error: Error) => void;
-  }): Promise<unknown> {
+  }): Promise<never> {
     throw new Error('Method not implemented.');
   }
 

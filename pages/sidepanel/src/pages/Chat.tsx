@@ -8,19 +8,18 @@ import {
   useStorage,
 } from '@chrome-extension-boilerplate/shared';
 import { useCallback, useDeferredValue } from 'react';
+import ProgramBadges from '@src/components/ProgramBadges';
 
-export default function Home() {
+export default function Chat() {
   const { chats } = useStorage(conversationStorage);
+
   const deferredChats = useDeferredValue(chats);
 
   const sendChat = useCallback(async (content: Chat['content']) => {
     try {
       const { chats: history } = await conversationStorage.get();
-      console.log(history);
       await conversationStorage.saveUserChat(content);
-      console.log('Saved user chat');
       await sendToBackground('Chat', { content, history });
-      console.log('Sent chat to background');
     } catch (e) {
       console.warn(JSON.stringify(e, null, 2));
       const message =
@@ -35,6 +34,7 @@ export default function Home() {
 
   return (
     <Layout>
+      <ProgramBadges />
       <ChattingForm chats={deferredChats} sendChat={sendChat} />
     </Layout>
   );

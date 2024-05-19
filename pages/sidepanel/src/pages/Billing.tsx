@@ -10,7 +10,9 @@ export default function Billing() {
       <Typography as="h1" className="text-2xl font-semibold">
         Billing
       </Typography>
-      <Typography>Total Price: {numberWithCurrency(totalPrice)}</Typography>
+      <Typography>
+        Total Price: {numberWithCurrency(totalPrice)} (₩{Math.round(totalPrice * 1360)})
+      </Typography>
       <Typography>Total Token: {numberWithCommas(totalToken)}</Typography>
       <Typography>Token Usage Input: {numberWithCommas(tokenUsageInfo.input)}</Typography>
       <Typography>Token Usage Output: {numberWithCommas(tokenUsageInfo.output)}</Typography>

@@ -20,6 +20,7 @@ type Setting = {
 };
 
 export type LLMConfig = Setting['llmConfig'];
+export type ExtensionConfig = Setting['extensionConfig'];
 
 type ThemeStorage = BaseStorage<Setting> & {
   updateLLMConfig: <K extends keyof Setting['llmConfig']>(

@@ -4,6 +4,7 @@ import { conversationStorage, LOADING_PLACEHOLDER } from './conversationStorage'
 import { billingInfoStorage } from './billingInfoStorage';
 import { settingStorage, type LLMConfig } from './settingStorage';
 import { toolsStorage } from './toolsStorage';
+import { programStorage, type Program, type Runner } from './programStorage';
 
 export {
   LOADING_PLACEHOLDER,
@@ -11,6 +12,9 @@ export {
   conversationStorage,
   billingInfoStorage,
   settingStorage,
+  programStorage,
+  Program,
+  Runner,
   LLMConfig,
   toolsStorage,
   createStorage,

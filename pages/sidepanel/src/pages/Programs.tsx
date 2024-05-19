@@ -1,0 +1,170 @@
+import Layout from '@src/components/Layout';
+import { Program, programStorage, toolsStorage, useStorage } from '@chrome-extension-boilerplate/shared';
+import { Button, Input, Option, Select, Switch, Textarea, Typography } from '@material-tailwind/react';
+import Modal from '@src/components/Modal';
+import { useState } from 'react';
+import ToolCategoryAndToolSelect from '@src/components/ToolCategoryAndToolSelect';
+
+export default function Programs() {
+  const { programs } = useStorage(programStorage);
+  const tools = useStorage(toolsStorage);
+
+  // const [generateLoading, setGenerateLoading] = useState(false);
+  const [selectedProgramId, setSelectedProgramId] = useState<Program['id'] | undefined>(undefined);
+  const selectedProgram = programs.find(program => program.id === selectedProgramId);
+  // const selectedProgram = programs.at(0);
+
+  const openStepModal = (programId: string) => {
+    setSelectedProgramId(programId);
+  };
+
+  const closeStepModal = () => {
+    setSelectedProgramId(undefined);
+  };
+
+  const createNewProgram = async () => {
+    await programStorage.createProgram({
+      id: 'program-' + Date.now(),
+      name: 'Program',
+      steps: [],
+      isPinned: false,
+    });
+  };
+
+  // const generateProgram = async (programId: string) => {
+  //   setGenerateLoading(true);
+  //   try {
+  //     const res = await sendToBackground('GenerateProgram', { programId });
+  //     if (!res) {
+  //       console.error('Error generating program');
+  //       return;
+  //     }
+  //   } catch (e) {
+  //     console.warn('Error in background script', e);
+  //   } finally {
+  //     setGenerateLoading(false);
+  //   }
+  // };
+
+  return (
+    <Layout>
+      <Typography as="h1" className="text-2xl font-semibold">
+        Programs
+      </Typography>
+
+      <Button size="sm" color="blue" className="mt-4" onClick={createNewProgram}>
+        Create Program
+      </Button>
+
+      <section className="flex mt-4 gap-y-4 gap-x-6 flex-wrap">
+        {programs.map(program => (
+          <div key={program.id} className="flex flex-col gap-4 min-w-[300px]">
+            <Input
+              label="Program Name"
+              defaultValue={program.name}
+              onChange={e => programStorage.updateProgram(program.id, { name: e.target.value })}
+            />
+            <Button color="blue" variant="outlined" size="sm" onClick={() => openStepModal(program.id)}>
+              View Steps
+            </Button>
+
+            <div className="flex justify-between">
+              <Switch
+                label={program.isPinned ? 'Pinned' : 'Not Pinned'}
+                defaultChecked={program.isPinned}
+                onChange={() => programStorage.updateProgram(program.id, { isPinned: !program.isPinned })}
+              />
+              <div className="flex gap-2">
+                <Button
+                  color="red"
+                  variant="outlined"
+                  size="sm"
+                  onClick={() => programStorage.removeProgram(program.id)}>
+                  Delete
+                </Button>
+              </div>
+            </div>
+          </div>
+        ))}
+      </section>
+      <Modal isOpen={!!selectedProgram} onClose={closeStepModal} header={selectedProgram?.name} className="">
+        {selectedProgram && (
+          <div className="pt-2">
+            {selectedProgram?.steps.map((stepInfo, index) => {
+              const { id, tool, whatToDo } = stepInfo;
+              return (
+                <div key={id} className="flex flex-col gap-4 pt-4">
+                  <Typography as="h2" className="text-lg font-semibold shrink-0">
+                    Step {index + 1}
+                  </Typography>
+                  <ToolCategoryAndToolSelect programId={selectedProgram.id} stepId={id} />
+                  <Textarea
+                    label={'What to do with ' + tool}
+                    defaultValue={whatToDo}
+                    onChange={e => {
+                      void programStorage.updateProgram(selectedProgram.id, {
+                        steps: selectedProgram.steps.map((s, i) =>
+                          i === index ? { ...s, whatToDo: e.target.value } : s,
+                        ),
+                      });
+                    }}
+                  />
+                  <div className="flex justify-between">
+                    <Button
+                      color="blue"
+                      variant="outlined"
+                      size="sm"
+                      onClick={() => {
+                        void programStorage.updateProgram(selectedProgram.id, {
+                          steps: [
+                            ...selectedProgram.steps.slice(0, index + 1),
+                            {
+                              id: Date.now(),
+                              whatToDo: selectedProgram.steps[index].whatToDo,
+                              tool: selectedProgram.steps[index].tool,
+                            },
+                            ...selectedProgram.steps.slice(index + 1),
+                          ],
+                        });
+                      }}>
+                      Insert Step
+                    </Button>
+                    <Button
+                      color="red"
+                      variant="outlined"
+                      size="sm"
+                      onClick={() => {
+                        void programStorage.updateProgram(selectedProgram.id, {
+                          steps: selectedProgram.steps.filter((_, i) => i !== index),
+                        });
+                      }}>
+                      Delete Step
+                    </Button>
+                  </div>
+                </div>
+              );
+            })}
+            <Button
+              color="blue"
+              className="mt-4"
+              size="sm"
+              onClick={() => {
+                void programStorage.updateProgram(selectedProgram.id, {
+                  steps: [
+                    ...selectedProgram.steps,
+                    {
+                      id: Date.now(),
+                      whatToDo: '',
+                      tool: tools[0].name,
+                    },
+                  ],
+                });
+              }}>
+              Add New Step
+            </Button>
+          </div>
+        )}
+      </Modal>
+    </Layout>
+  );
+}

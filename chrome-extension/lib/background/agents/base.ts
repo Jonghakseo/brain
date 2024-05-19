@@ -1,4 +1,4 @@
-import { ChatCompletionMessage, ChatCompletionMessageParam } from 'openai/resources';
+import { ChatCompletion, ChatCompletionMessage, ChatCompletionMessageParam } from 'openai/resources';
 import { LLMConfig } from '@chrome-extension-boilerplate/shared';
 import { RunnableTools } from 'openai/lib/RunnableFunction';
 import { ChatCompletionRunner } from 'openai/lib/ChatCompletionRunner';
@@ -9,9 +9,12 @@ export abstract class BaseLLM {
   config: LLMConfig | null = null;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   tools: RunnableTools<any[]> = [];
-  toolChoice: 'required' | 'auto' = 'auto';
+  toolChoice: 'required' | 'auto' | 'none' = 'auto';
+  isJson: boolean = false;
 
   abstract saveUsage(usage: unknown): Promise<void>;
+
+  abstract log(...args: Parameters<typeof console.log>): void;
 
   abstract createChatCompletionWithTools(params: {
     messages: ChatCompletionMessageParam[];
@@ -21,7 +24,7 @@ export abstract class BaseLLM {
     onMessage?: (message: ChatCompletionMessageParam) => void;
     onError?: (error: Error) => void;
     onEnd?: (runner?: ChatCompletionRunner) => void;
-  }): Promise<unknown>;
+  }): Promise<ChatCompletion>;
 
   abstract createChatCompletionStreamWithTools(params: {
     messages: ChatCompletionMessageParam[];
