@@ -50,7 +50,7 @@ export function zodFunction<T extends object>({
 const removeSomeFields = (obj: unknown) => {
   const target = JSON.parse(JSON.stringify(obj));
   const deleteProperties = [
-    // 'additionalProperties',
+    'additionalProperties',
     '$schema',
     // 'maximum',
     // 'minimum',

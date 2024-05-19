@@ -84,7 +84,7 @@ export class LLM {
       this.llm.tools = ALL_TOOLS.filter(tool => toolNames.includes(tool.function?.name ?? 'NONE'));
       this.llm.log('STEPS TOOL', this.llm.tools);
       let functionName: string | null = null;
-      const response = await this.llm.createChatCompletionWithTools({
+      const response = await this.llm.createChatCompletionStreamWithTools({
         messages: history,
         onFunctionCall: functionCall => {
           if (!functionCall?.name || functionCall.name === anyCall.function.name) {
@@ -213,7 +213,7 @@ export class LLM {
       messages = await this.getMessagesWithoutImagesExceptLast(messages);
     }
 
-    console.log('ACTIVATED TOOLS', this.llm.tools.map(tool => tool.function.name).join(', '));
+    console.log('LLM::ACTIVATED TOOLS', this.llm.tools.map(tool => tool.function.name).join(', '));
     const throttledUpdateAIChat = getThrottledUpdateAIChat();
     let text = '';
     await this.llm.createChatCompletionStreamWithTools({

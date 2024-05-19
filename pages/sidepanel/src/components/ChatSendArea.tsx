@@ -70,6 +70,9 @@ function ChatSendArea({ onSend, loading }: ChatSendAreaProps) {
       ref={formRef}
       onSubmit={e => {
         e.preventDefault();
+        if (loading) {
+          return;
+        }
         void sendMessage();
       }}
       className="flex w-full flex-row items-center gap-2 rounded-[24px] border border-gray-900/10 bg-gray-900/5 p-2">

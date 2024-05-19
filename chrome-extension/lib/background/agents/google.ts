@@ -10,7 +10,7 @@ import {
   ToolConfig,
   UsageMetadata,
 } from '@google/generative-ai';
-import { ChatCompletionMessage, ChatCompletionMessageParam } from 'openai/resources';
+import { ChatCompletion, ChatCompletionMessage, ChatCompletionMessageParam } from 'openai/resources';
 import { BaseLLM } from '@lib/background/agents/base';
 import { billingInfoStorage, LLMConfig } from '@chrome-extension-boilerplate/shared';
 import { RunnableTools } from 'openai/lib/RunnableFunction';
@@ -26,6 +26,7 @@ export class GoogleLLM implements BaseLLM {
   tools: RunnableTools<any[]> = [];
   toolChoice: 'required' | 'auto' = 'required';
   isJson = false;
+  useAnyCall = false;
 
   constructor() {
     this.sdk = new GoogleGenerativeAI(String(process.env.GOOGLEAI_KEY));
@@ -162,7 +163,8 @@ export class GoogleLLM implements BaseLLM {
 
         console.log(`[${this.name}] ` + 'message', text);
         onMessage?.({ role: 'assistant', content: text });
-        return secondResult;
+        // FIXME: temporary type error fix
+        return secondResult as unknown as ChatCompletion;
       }
 
       let text = '';
@@ -173,7 +175,8 @@ export class GoogleLLM implements BaseLLM {
       }
       console.log(`[${this.name}] ` + 'message', text);
       onMessage?.({ role: 'assistant', content: text });
-      return result;
+      // FIXME: temporary type error fix
+      return result as unknown as ChatCompletion;
     } catch (e) {
       if (e instanceof Error) {
         console.warn(`[${this.name}] ` + 'error', e);

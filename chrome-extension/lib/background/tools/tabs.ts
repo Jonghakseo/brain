@@ -8,7 +8,6 @@ const TabInfo = z.object({
   width: z.number().optional(),
   height: z.number().optional(),
   groupId: z.number().optional(),
-  windowId: z.number().optional(),
   lastAccessed: z.number().optional(),
 });
 
@@ -19,7 +18,6 @@ function convertTabToTabInfo({
   title,
   width,
   height,
-  windowId,
   lastAccessed,
 }: chrome.tabs.Tab): z.infer<typeof TabInfo> {
   return {
@@ -29,7 +27,6 @@ function convertTabToTabInfo({
     title,
     width,
     height,
-    windowId: windowId === -1 ? undefined : windowId,
     lastAccessed,
   };
 }
@@ -112,7 +109,6 @@ async function navigateTab(params: z.infer<typeof NavigateTabParams>) {
 
 const TabGroupParams = z.object({
   groupId: z.number().optional(),
-  windowId: z.number().optional(),
   tabIds: z.array(z.number()),
 });
 

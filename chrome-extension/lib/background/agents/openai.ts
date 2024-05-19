@@ -38,11 +38,12 @@ export class OpenAiLLM implements BaseLLM {
   }
 
   makeSystemMessage(systemPrompt: string): ChatCompletionSystemMessageParam {
+    const invalidToolMessage =
+      '**[IMPORTANT!!] => IF YOU RECEIVED A MESSAGE START WITH"INVALID TOOL CALL" YOU CAN CALL THAT TOOL VIA "executeTool" FUNCTION.**\n' +
+      '**[IMPORTANT!!] => IF YOU WANT TO SEE SPECIFIC TOOL INPUT, YOU CAN USE "checkToolDetailInput" FUNCTION.**\n';
     const systemMessage: ChatCompletionSystemMessageParam = {
       role: 'system',
-      content:
-        systemPrompt +
-        '\n***IMPORTANT => If you received a message like [Invalid tool_call~] you can call that tool via callMyAnyTool function.***',
+      content: systemPrompt + this.useAnyCall ? invalidToolMessage : '',
     };
     return systemMessage;
   }

@@ -44,24 +44,23 @@ export default function Tools() {
               <section className="grid grid-cols-2 gap-2">
                 {tools.map(tool => {
                   return (
-                    <div key={tool.name} className="flex flex-col gap-4 rounded-md border-2 p-2">
+                    <div
+                      key={tool.name}
+                      className="flex flex-col gap-4 rounded-md border-2 p-2 cursor-pointer"
+                      onClick={() => {
+                        if (!tool.isActivated) {
+                          void toolsStorage.activateTool(tool.name);
+                        } else {
+                          void toolsStorage.deactivateTool(tool.name);
+                        }
+                      }}>
                       <PopoverWithHover
                         content={
                           <Typography as="p" className="text-sm">
                             {tool.description}
                           </Typography>
                         }>
-                        <Switch
-                          label={<label className="capitalize">{tool.name}</label>}
-                          checked={tool.isActivated}
-                          onChange={e => {
-                            if (e.target.checked) {
-                              void toolsStorage.activateTool(tool.name);
-                            } else {
-                              void toolsStorage.deactivateTool(tool.name);
-                            }
-                          }}
-                        />
+                        <Switch label={<label className="capitalize">{tool.name}</label>} checked={tool.isActivated} />
                       </PopoverWithHover>
                     </div>
                   );

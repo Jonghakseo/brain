@@ -1,4 +1,3 @@
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 import {
   billingTools,
   etcTools,
@@ -13,43 +12,44 @@ import {
 import { z } from 'zod';
 import { toolsStorage } from '@chrome-extension-boilerplate/shared';
 
+const addCategoryIntoTools =
+  <T>(tools: T[]) =>
+  (categoryName: string) => {
+    return tools.map(tool => ({ ...tool, category: categoryName })) as T & { category: string }[];
+  };
+const ALL_TOOLS_WITH_CATEGORY = [
+  ...addCategoryIntoTools(settingTools)('Config'),
+  ...addCategoryIntoTools(urlTools)('History & Bookmark'),
+  ...addCategoryIntoTools(tabsTools)('Tab Manage & Navigation'),
+  ...addCategoryIntoTools(screenTools)('Search & Screen Capture'),
+  ...addCategoryIntoTools(searchTools)('Search & Screen Capture'),
+  ...addCategoryIntoTools(programTools)('Programs & Macros'),
+  ...addCategoryIntoTools(etcTools)('ETC tools'),
+  ...addCategoryIntoTools(billingTools)('OpenAI Usage'),
+];
+
+// eslint-disable-next-line
+// @ts-ignore
 export const ALL_TOOLS = [
-  ...billingTools,
   ...settingTools,
   ...urlTools,
-  ...screenTools,
-  ...etcTools,
   ...tabsTools,
-  // TODO: this function is unstable
-  // ...domTools,
+  ...screenTools,
+  ...searchTools,
+  ...programTools,
+  ...etcTools,
+  ...billingTools,
 ];
 
 chrome.runtime.onInstalled.addListener(() => {
-  const addCategoryIntoTools =
-    <T>(tools: T[]) =>
-    (categoryName: string) => {
-      return tools.map(tool => ({ ...tool, category: categoryName })) as T & { category: string }[];
-    };
-
   // Resister all tools when the extension is installed
-  void toolsStorage.registerTools([
-    // ...addCategoryIntoTools(toolManagingTools)('Config'),
-    ...addCategoryIntoTools(settingTools)('Config'),
-    ...addCategoryIntoTools(urlTools)('History & Bookmark'),
-    ...addCategoryIntoTools(tabsTools)('Tab Manage & Navigation'),
-    ...addCategoryIntoTools(screenTools)('Search & Screen Capture'),
-    ...addCategoryIntoTools(searchTools)('Search & Screen Capture'),
-    ...addCategoryIntoTools(programTools)('Programs & Macros'),
-    ...addCategoryIntoTools(etcTools)('ETC tools'),
-    ...addCategoryIntoTools(billingTools)('OpenAI Usage'),
-    // ...addCategoryIntoTools(domTools)('dom'),
-  ]);
+  void toolsStorage.registerTools(ALL_TOOLS_WITH_CATEGORY);
 });
 
 const allToolsNames = ALL_TOOLS.map(tool => tool.function.name) as [string, ...string[]];
 
 const ExecuteToolParams = z.object({
-  toolName: z.string(),
+  toolName: z.enum(allToolsNames),
   toolParams: z.any(),
 });
 
@@ -78,19 +78,17 @@ const getAllMyTools = async () => {
   return tools.map(tool => ({ name: tool.name, desc: tool.description }));
 };
 
-const GetMyToolDetailInfoParams = z.object({
-  toolName: z.string(),
+const CheckToolDetailInputParams = z.object({
+  name: z.enum(allToolsNames),
 });
 
-const getMyToolDetailInfo = async (params: z.infer<typeof GetMyToolDetailInfoParams>) => {
-  const tool = ALL_TOOLS.find(tool => tool.function.name === params.toolName);
+const checkToolDetailInput = async (params: z.infer<typeof CheckToolDetailInputParams>) => {
+  const tool = ALL_TOOLS.find(tool => tool.function.name === params.name);
   if (!tool) {
     return { success: false, error: 'Tool not found' };
   }
   return {
-    name: tool.function.name,
-    description: tool.function.description,
-    input: tool.function.parameters,
+    schema: tool.function.parameters,
   };
 };
 
@@ -122,9 +120,9 @@ export const toolManagingTools = [
     description: 'Get all my useful tools',
   }),
   zodFunction({
-    function: getMyToolDetailInfo,
-    schema: GetMyToolDetailInfoParams,
-    description: 'Get detail information of a tool',
+    function: checkToolDetailInput,
+    schema: CheckToolDetailInputParams,
+    description: 'Check tool detail input',
   }),
   // zodFunction({
   //   function: toggleToolsActivation,

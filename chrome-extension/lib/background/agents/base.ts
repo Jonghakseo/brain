@@ -35,5 +35,5 @@ export abstract class BaseLLM {
     onFunctionCallResult?: (functionCallResult: string) => void;
     onMessage?: (message: ChatCompletionMessageParam) => void;
     onError?: (error: Error) => void;
-  }): Promise<unknown>;
+  }): Promise<ChatCompletion>;
 }

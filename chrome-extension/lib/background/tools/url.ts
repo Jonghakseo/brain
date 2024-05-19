@@ -30,10 +30,11 @@ async function getMyBookmarks() {
 
 const GetHistoryParams = z.object({
   recentDays: z.number().int().positive().min(1).max(30).default(7).optional(),
+  sortBy: z.enum(['visitCount', 'lastVisitTime']).default('lastVisitTime').optional(),
   searchText: z.string().optional(),
 });
 
-async function getHistory({ recentDays = 7, searchText = '' }: z.infer<typeof GetHistoryParams>) {
+async function getHistory({ recentDays = 7, searchText = '', sortBy }: z.infer<typeof GetHistoryParams>) {
   const millisecondsPerDay = 1000 * 60 * 60 * 24;
   const daysAgoTime = Date.now() - millisecondsPerDay * recentDays;
 
@@ -53,7 +54,12 @@ async function getHistory({ recentDays = 7, searchText = '' }: z.infer<typeof Ge
 
   // 방문 시간이 최근 순으로 정렬 후 상위 N 개만 반환
   return [...deduplicatedHistoryItems]
-    .sort((a, b) => (b.lastVisitTime ?? 0) - (a.lastVisitTime ?? 0))
+    .sort((a, b) => {
+      if (sortBy === 'visitCount') {
+        return (b.visitCount ?? 0) - (a.visitCount ?? 0);
+      }
+      return (b.lastVisitTime ?? 0) - (a.lastVisitTime ?? 0);
+    })
     .map(history => ({
       title: history.title,
       url: history.url,
@@ -82,6 +88,6 @@ export const urlTools = [
   zodFunction({
     function: getMostVisitedUrls,
     schema: z.object({}),
-    description: 'Get most visited urls.',
+    description: 'Get most visited urls. Not included visited count.',
   }),
 ];
