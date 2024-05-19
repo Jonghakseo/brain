@@ -10,6 +10,7 @@ import { billingInfoStorage, LLMConfig } from '@chrome-extension-boilerplate/sha
 import { RunnableTools } from 'openai/lib/RunnableFunction';
 import { ChatCompletionRunner } from 'openai/lib/ChatCompletionRunner';
 import { BaseLLM } from '@lib/background/agents/base';
+import { anyCall } from '@lib/background/tool';
 
 export class OpenAiLLM implements BaseLLM {
   name: string = 'OpenAiLLM';
@@ -33,6 +34,16 @@ export class OpenAiLLM implements BaseLLM {
     } catch (e) {
       console.warn('Error in openai log', e);
     }
+  }
+
+  makeSystemMessage(systemPrompt: string): ChatCompletionSystemMessageParam {
+    const systemMessage: ChatCompletionSystemMessageParam = {
+      role: 'system',
+      content:
+        systemPrompt +
+        '\n***IMPORTANT => If you received a message like [Invalid tool_call~] you can call that tool via callMyAnyTool function.***',
+    };
+    return systemMessage;
   }
 
   async saveUsage(usage: ChatCompletion['usage']) {
@@ -63,10 +74,7 @@ export class OpenAiLLM implements BaseLLM {
     }
     const { systemPrompt, topP, temperature, maxTokens } = this.config;
 
-    const systemMessage: ChatCompletionSystemMessageParam = {
-      role: 'system',
-      content: systemPrompt,
-    };
+    const systemMessage: ChatCompletionSystemMessageParam = this.makeSystemMessage(systemPrompt);
     try {
       const result = await this.client.chat.completions.create({
         model: this.model,
@@ -87,7 +95,7 @@ export class OpenAiLLM implements BaseLLM {
       for (const choice of result.choices) {
         onMessage?.(choice.message);
         onContent?.(choice.message.content ?? '');
-        this.log('message', choice.message.content);
+        this.log('message - createChatCompletion', choice.message.content);
       }
 
       return result;
@@ -121,16 +129,13 @@ export class OpenAiLLM implements BaseLLM {
     // FIXME: temporary fix for empty tool usage
     if (this.tools.length === 0) {
       // TODO: make stream
-      return this.createChatCompletion({ messages });
+      return this.createChatCompletion({ messages, onMessage, onContent, onError });
     }
     if (!this.config) {
       throw new Error('config is not set');
     }
     const { systemPrompt, topP, temperature, maxTokens } = this.config;
-    const systemMessage: ChatCompletionSystemMessageParam = {
-      role: 'system',
-      content: systemPrompt,
-    };
+    const systemMessage: ChatCompletionSystemMessageParam = this.makeSystemMessage(systemPrompt);
 
     const runner = this.client.beta.chat.completions.runTools({
       model: this.model,
@@ -138,7 +143,7 @@ export class OpenAiLLM implements BaseLLM {
       temperature,
       max_tokens: maxTokens,
       top_p: topP,
-      tools: this.tools,
+      tools: [anyCall, ...this.tools],
       tool_choice: this.toolChoice,
       response_format: {
         type: this.isJson ? 'json_object' : 'text',
@@ -166,7 +171,11 @@ export class OpenAiLLM implements BaseLLM {
         onFunctionCall?.(functionCall);
       })
       .on('functionCallResult', functionCallResult => {
-        this.log('functionCallResult', { response: JSON.parse(functionCallResult) });
+        try {
+          this.log('functionCallResult', { response: JSON.parse(functionCallResult) });
+        } catch {
+          this.log('functionCallResult', { response: functionCallResult });
+        }
         onFunctionCallResult?.(functionCallResult);
       })
       .on('totalUsage', async usage => {
@@ -188,7 +197,7 @@ export class OpenAiLLM implements BaseLLM {
     onFunctionCallResult,
   }: {
     messages: ChatCompletionMessageParam[];
-    onContent?: (delta: string, snapshot: string) => void;
+    onContent?: (delta: string) => void;
     onConnect?: () => void;
     onFunctionCall?: (functionCall: ChatCompletionMessage['function_call']) => void;
     onFunctionCallResult?: (functionCallResult: string) => void;
@@ -198,12 +207,15 @@ export class OpenAiLLM implements BaseLLM {
     if (!this.config) {
       throw new Error('config is not set');
     }
+    // FIXME: temporary fix for empty tool usage
+    if (this.tools.length === 0) {
+      // TODO: make stream
+      return this.createChatCompletion({ messages, onMessage, onContent, onError, onConnect });
+    }
     const { topP, temperature, maxTokens, systemPrompt } = this.config;
 
-    const systemMessage: ChatCompletionSystemMessageParam = {
-      role: 'system',
-      content: systemPrompt,
-    };
+    const systemMessage: ChatCompletionSystemMessageParam = this.makeSystemMessage(systemPrompt);
+
     const stream = this.client.beta.chat.completions
       .runTools({
         model: this.model,
@@ -213,7 +225,7 @@ export class OpenAiLLM implements BaseLLM {
         top_p: topP,
         stream: true,
         stream_options: { include_usage: true },
-        tools: this.tools,
+        tools: [anyCall, ...this.tools],
         tool_choice: this.toolChoice,
         response_format: {
           type: this.isJson ? 'json_object' : 'text',
@@ -228,7 +240,11 @@ export class OpenAiLLM implements BaseLLM {
         onFunctionCall?.(functionCall);
       })
       .on('functionCallResult', functionCallResult => {
-        this.log('functionCallResult', { response: JSON.parse(functionCallResult) });
+        try {
+          this.log('functionCallResult', { response: JSON.parse(functionCallResult) });
+        } catch {
+          this.log('functionCallResult', { response: functionCallResult });
+        }
         onFunctionCallResult?.(functionCallResult);
       })
       .on('message', message => {
@@ -237,10 +253,9 @@ export class OpenAiLLM implements BaseLLM {
       })
       .on('error', error => {
         this.log('error', error);
-        stream.abort();
         onError?.(error);
       })
-      .on('content', (contentDelta, contentSnapshot) => onContent?.(contentDelta, contentSnapshot));
+      .on('content', contentDelta => onContent?.(contentDelta));
 
     const result = await stream.finalChatCompletion();
 

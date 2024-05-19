@@ -95,6 +95,8 @@ async function navigateTab(params: z.infer<typeof NavigateTabParams>) {
         }
         await chrome.tabs.update(params.tabId, { active: true });
         break;
+      default:
+        throw new Error('Invalid action');
     }
     return { success: true };
   } catch (e) {

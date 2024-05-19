@@ -71,32 +71,6 @@ export class GoogleLLM implements BaseLLM {
       systemInstruction: systemPrompt,
     });
 
-    const removeSomeFields = (obj: unknown) => {
-      const target = JSON.parse(JSON.stringify(obj));
-      const deleteProperties = [
-        'additionalProperties',
-        '$schema',
-        'maximum',
-        'minimum',
-        'default',
-        'minItems',
-        'exclusiveMinimum',
-      ];
-      const removeProperties = (_obj: Record<string, unknown>) => {
-        for (const key in _obj) {
-          if (deleteProperties.includes(key)) {
-            delete _obj[key];
-          } else if (typeof _obj[key] === 'object') {
-            removeProperties(_obj[key] as Record<string, unknown>);
-          }
-        }
-      };
-
-      removeProperties(target);
-
-      return target;
-    };
-
     const contents = messages.map(this.convertMessageToContent);
     // const tools: Tool[] = this.tools.map(tool => {
     //   return {
@@ -115,7 +89,7 @@ export class GoogleLLM implements BaseLLM {
           return {
             name: tool.function.name,
             description: tool.function.description,
-            parameters: removeSomeFields(tool.function.parameters),
+            parameters: tool.function.parameters,
           };
         }),
       } as Tool,

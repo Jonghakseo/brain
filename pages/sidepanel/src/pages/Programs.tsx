@@ -1,6 +1,6 @@
 import Layout from '@src/components/Layout';
 import { Program, programStorage, toolsStorage, useStorage } from '@chrome-extension-boilerplate/shared';
-import { Button, Input, Option, Select, Switch, Textarea, Typography } from '@material-tailwind/react';
+import { Button, Input, Switch, Textarea, Typography } from '@material-tailwind/react';
 import Modal from '@src/components/Modal';
 import { useState } from 'react';
 import ToolCategoryAndToolSelect from '@src/components/ToolCategoryAndToolSelect';
@@ -8,12 +8,9 @@ import ToolCategoryAndToolSelect from '@src/components/ToolCategoryAndToolSelect
 export default function Programs() {
   const { programs } = useStorage(programStorage);
   const tools = useStorage(toolsStorage);
-
-  // const [generateLoading, setGenerateLoading] = useState(false);
   const [selectedProgramId, setSelectedProgramId] = useState<Program['id'] | undefined>(undefined);
   const selectedProgram = programs.find(program => program.id === selectedProgramId);
   // const selectedProgram = programs.at(0);
-
   const openStepModal = (programId: string) => {
     setSelectedProgramId(programId);
   };
@@ -30,21 +27,6 @@ export default function Programs() {
       isPinned: false,
     });
   };
-
-  // const generateProgram = async (programId: string) => {
-  //   setGenerateLoading(true);
-  //   try {
-  //     const res = await sendToBackground('GenerateProgram', { programId });
-  //     if (!res) {
-  //       console.error('Error generating program');
-  //       return;
-  //     }
-  //   } catch (e) {
-  //     console.warn('Error in background script', e);
-  //   } finally {
-  //     setGenerateLoading(false);
-  //   }
-  // };
 
   return (
     <Layout>
@@ -69,25 +51,28 @@ export default function Programs() {
             </Button>
 
             <div className="flex justify-between">
-              <Switch
-                label={program.isPinned ? 'Pinned' : 'Not Pinned'}
-                defaultChecked={program.isPinned}
-                onChange={() => programStorage.updateProgram(program.id, { isPinned: !program.isPinned })}
-              />
               <div className="flex gap-2">
-                <Button
-                  color="red"
-                  variant="outlined"
-                  size="sm"
-                  onClick={() => programStorage.removeProgram(program.id)}>
-                  Delete
-                </Button>
+                <Switch
+                  label="Pin"
+                  defaultChecked={program.isPinned}
+                  onChange={() => programStorage.updateProgram(program.id, { isPinned: !program.isPinned })}
+                />
+                {program.__records?.isUseful && (
+                  <Switch
+                    label="UseRecord"
+                    defaultChecked={!!program.useRecord}
+                    onChange={() => programStorage.updateProgram(program.id, { useRecord: !program.useRecord })}
+                  />
+                )}
               </div>
+              <Button color="red" variant="outlined" size="sm" onClick={() => programStorage.removeProgram(program.id)}>
+                Delete
+              </Button>
             </div>
           </div>
         ))}
       </section>
-      <Modal isOpen={!!selectedProgram} onClose={closeStepModal} header={selectedProgram?.name} className="">
+      <Modal isOpen={!!selectedProgram} onClose={closeStepModal} header={selectedProgram?.name} className="min-h-[60%]">
         {selectedProgram && (
           <div className="pt-2">
             {selectedProgram?.steps.map((stepInfo, index) => {

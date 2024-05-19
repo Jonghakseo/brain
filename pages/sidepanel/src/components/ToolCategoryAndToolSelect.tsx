@@ -13,6 +13,7 @@ type ToolCategoryAndToolSelectProps = {
 const ToolCategoryAndToolSelect = ({ stepId, programId }: ToolCategoryAndToolSelectProps) => {
   const tools = useStorage(toolsStorage);
   const { programs } = useStorage(programStorage);
+
   const [selectedCategory, setSelectedCategory] = useState<string | undefined>();
   const selectedProgram = programs.find(program => program.id === programId);
   const toolCategories = useMemo(() => {
@@ -23,7 +24,11 @@ const ToolCategoryAndToolSelect = ({ stepId, programId }: ToolCategoryAndToolSel
     return null;
   }
   const stepInfo = selectedProgram?.steps.find(step => step.id === stepId);
+  if (!stepInfo) {
+    return null;
+  }
   const selectedTool = stepInfo?.tool ?? '';
+  console.log(selectedTool);
   const selectedToolsCategory = tools.find(tool => tool.name === selectedTool)?.category ?? JUST_THINK;
 
   const category = selectedCategory ?? selectedToolsCategory;
@@ -60,8 +65,9 @@ const ToolCategoryAndToolSelect = ({ stepId, programId }: ToolCategoryAndToolSel
           label="Tools"
           error={tools.every(_tool => _tool.name !== selectedTool)}
           className="capitalize"
+          defaultValue={selectedTool}
           value={selectedTool}
-          onChange={async value => {
+          onChange={value => {
             void programStorage.updateProgram(selectedProgram.id, {
               steps: selectedProgram.steps.map(step => {
                 if (step.id === stepId) {

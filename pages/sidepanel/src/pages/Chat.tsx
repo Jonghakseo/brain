@@ -7,11 +7,15 @@ import {
   sendToBackground,
   useStorage,
 } from '@chrome-extension-boilerplate/shared';
-import { useCallback, useDeferredValue } from 'react';
+import { useCallback, useDeferredValue, useEffect } from 'react';
 import ProgramBadges from '@src/components/ProgramBadges';
 
 export default function Chat() {
   const { chats } = useStorage(conversationStorage);
+
+  useEffect(() => {
+    void conversationStorage.removeAllPlaceholder('loading');
+  }, []);
 
   const deferredChats = useDeferredValue(chats);
 

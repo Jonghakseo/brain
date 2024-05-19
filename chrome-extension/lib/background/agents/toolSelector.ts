@@ -13,30 +13,28 @@ export class ToolSelector extends OpenAiLLM {
     // this.model = 'gpt-4o';
     this.isJson = true;
     this.config = {
-      temperature: 0.7,
+      temperature: 1.9,
       topP: 1,
-      maxTokens: 2000,
-      systemPrompt: 'You are a TOOL SELECTOR',
+      maxTokens: 4000,
+      systemPrompt: "You're a thoughtful and well-grounded tool selector.",
     };
   }
 
   async selectTool(messages: ChatCompletionMessageParam[]) {
     const allTools = await toolsStorage.getTools();
     const allToolsNameAndDescription = allTools.map(tool => ({ name: tool.name, description: tool.description }));
-    // const initialActivatingTools = await toolsStorage.getActivatedTools();
-    await toolsStorage.deactivateAllTools();
 
     const messagesWithText = replaceImageMessages(messages);
 
     const lastMyMessage = messagesWithText.at(-1);
     if (lastMyMessage === undefined) {
-      return;
+      return [];
     }
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-expect-error
     const request = (lastMyMessage as ChatCompletionUserMessageParam).content.at(0).text;
     if (request === undefined) {
-      return;
+      return [];
     }
 
     const selectableToolsText = JSON.stringify(allToolsNameAndDescription, null, 2);
@@ -47,8 +45,17 @@ export class ToolSelector extends OpenAiLLM {
         ...messagesWithText.slice(0, -1),
         {
           role: 'user',
-          content: `If I type ["${request}"] in the last chat, and it's a request, print out what tool I should use. Please tell me the necessary tools perfectly. Think carefully.
-          WHEN YOU USE CAPTURE REQUEST PLEASE THINK CAREFULLY IT IS A EXPENSIVE TOOL.
+          content: `This is my entire tools list. 
+# TOOL LIST
+
+\`\`\`json\n${selectableToolsText}\n\n\`\`\``,
+        },
+        {
+          role: 'user',
+          content: `If I type ["${request}"] in the last chat, and it's a request, print out what tool I should use. 
+Feel free to suggest what tools you'd like to see.
+[Important] When using capture requests, only request them when you really need a screen capture.
+
 # REQUEST
 |> ${request}
 
@@ -62,10 +69,10 @@ export class ToolSelector extends OpenAiLLM {
   "activateTools": [],
   "reason": "This request doesn't need any tools."
 }
-// Request: "It's boring."
+// Request: "Please celebrate me."
 {
   "isNeed": false,
-  "activateTools": [partyFirecrackers],
+  "activateTools": [showPartyFirecrackers],
   "reason": "This request doesn't need other tools. But you can use partyFirecrackers."
 }
 // Request: "I want to open github.com and looking for some new interesting repositories."
@@ -75,10 +82,7 @@ export class ToolSelector extends OpenAiLLM {
   "reason": "This request needs to move or open a new tab. and also need to capture the screen."
 } 
 \`\`\`
-
-# TOOL LIST
-
-\`\`\`json\n${selectableToolsText}\n\n\`\`\``,
+`,
         },
       ],
     });
@@ -100,11 +104,9 @@ export class ToolSelector extends OpenAiLLM {
     }, {});
 
     console.log('ToolSelector results:', results);
-    for (const [name, number] of Object.entries(results)) {
-      // If more than half of the votes are for a tool, activate it.
-      if (number > Object.keys(results).length / 2) {
-        await toolsStorage.activateTool(name);
-      }
-    }
+    // return tools only number > 2
+    return Object.entries(results)
+      .filter(([, count]) => count > 2)
+      .map(([toolName]) => toolName) as string[];
   }
 }

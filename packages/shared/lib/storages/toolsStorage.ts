@@ -29,13 +29,28 @@ const storage = createStorage<Tools>('tools', [], {
 export const toolsStorage: ToolsStorage = {
   ...storage,
   registerTools: async maybeZodFunctions => {
-    const tools: Tools = maybeZodFunctions.map(maybeZodFunction => ({
+    const newTools: Tools = maybeZodFunctions.map(maybeZodFunction => ({
       // openai RunnableToolFunction
       ...maybeZodFunction.function,
       category: maybeZodFunction.category,
       isActivated: true,
     }));
-    await storage.set(tools);
+    await storage.set(prev => {
+      if (!prev) {
+        return newTools;
+      }
+      const tools: Tools = [];
+      newTools.forEach(newTool => {
+        // if the tool is not already in the list, add it
+        if (!prev.some(t => t.name === newTool.name)) {
+          tools.push(newTool);
+        } else {
+          // if the tool is already in the list, update it
+          tools.push(prev.find(t => t.name === newTool.name) as Tool);
+        }
+      });
+      return tools;
+    });
   },
   activateTool: async name => {
     await storage.set(prev => {

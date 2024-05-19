@@ -41,7 +41,7 @@ function ChattingForm({ chats, sendChat }: ChattingFormProps) {
           <ChatProfile type="ai" />
           <Card className="w-auto max-w-[90%]">
             <CardBody className="p-4 text-pretty">
-              <ChatBox text="Hello! I'm your browser assistant. How can I help you?" />
+              <ChatBox createdAt={-1} text="Hello! I'm your browser assistant. How can I help you?" />
             </CardBody>
           </Card>
         </li>
@@ -55,7 +55,7 @@ function ChattingForm({ chats, sendChat }: ChattingFormProps) {
                 {!isUser && <ChatProfile type="ai" />}
                 <Card className={'w-auto max-w-[90%]' + (isUser ? ' ml-auto' : '')}>
                   <CardBody className="p-4 text-pretty">
-                    <ChatBox text={chat.content.text} image={chat.content.image} />
+                    <ChatBox createdAt={chat.createdAt} text={chat.content.text} image={chat.content.image} />
                   </CardBody>
                 </Card>
                 {isUser && <ChatProfile type="user" />}

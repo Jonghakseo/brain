@@ -3,7 +3,7 @@ import { delay, PartyEffectMessage } from '@chrome-extension-boilerplate/shared'
 import { zodFunction } from '@lib/background/tools/zodFunction';
 import { z } from 'zod';
 
-async function partyFirecrackers() {
+async function showPartyFirecrackers() {
   const tab = await getCurrentTab();
   if (!tab?.id) {
     return { success: false };
@@ -35,7 +35,7 @@ async function delayMs(params: z.infer<typeof DelayParams>) {
 
 export const etcTools = [
   zodFunction({
-    function: partyFirecrackers,
+    function: showPartyFirecrackers,
     schema: z.object({}),
     description: 'Show Firecrackers into the current tab. :)',
   }),

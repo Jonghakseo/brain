@@ -56,7 +56,12 @@ const rpcMethods = {
   },
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   partyEffect: async (_: PartyEffectMessage['payload']) => {
-    showPartyEffect();
+    try {
+      showPartyEffect();
+      return { success: true };
+    } catch (e) {
+      return { success: false, error: (e as Error).message };
+    }
   },
 };
 
@@ -64,12 +69,12 @@ const isRPCMethod = (method: string): method is keyof typeof rpcMethods => {
   return method in rpcMethods;
 };
 
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
   if (isRPCMethod(message.type)) {
     try {
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-ignore
-      sendResponse(rpcMethods[message.type](message.payload));
+      sendResponse(await rpcMethods[message.type](message.payload));
     } catch (e) {
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-ignore

@@ -2,20 +2,30 @@ import { z } from 'zod';
 import { zodFunction } from './zodFunction';
 
 type BookmarkNode = {
+  id: string;
   url: string;
   title: string;
+  dateAdded?: number;
+  parentId?: string;
+  children?: BookmarkNode[];
 };
 async function getMyBookmarks() {
   const bookmarks: chrome.bookmarks.BookmarkTreeNode[] = await chrome.bookmarks.getTree();
-  // tree 순회 하면서 모든 url, title 정보 BookmarkNode 배열로 평탄화
-  const flatten = (node: chrome.bookmarks.BookmarkTreeNode): BookmarkNode[] => {
-    if (node.children) {
-      return node.children.flatMap(flatten);
-    }
-    return [{ url: node.url ?? 'unknown', title: node.title }];
+  // tree 순회 하면서 모든 BookmarkNode 정보 가공해서 수집
+
+  const travel = (node: chrome.bookmarks.BookmarkTreeNode): BookmarkNode[] => {
+    const children = node.children ?? [];
+    return children.map(child => ({
+      id: child.id,
+      url: child.url ?? '',
+      title: child.title,
+      dateAdded: child.dateAdded,
+      parentId: node.id,
+      children: travel(child),
+    }));
   };
 
-  return bookmarks.flatMap(flatten);
+  return bookmarks.flatMap(travel);
 }
 
 const GetHistoryParams = z.object({
@@ -25,12 +35,13 @@ const GetHistoryParams = z.object({
 
 async function getHistory({ recentDays = 7, searchText = '' }: z.infer<typeof GetHistoryParams>) {
   const millisecondsPerDay = 1000 * 60 * 60 * 24;
-  const daysAgoTime = new Date().getTime() - millisecondsPerDay * recentDays;
+  const daysAgoTime = Date.now() - millisecondsPerDay * recentDays;
 
   const historyItems = await chrome.history.search({
     text: searchText,
-    maxResults: 500,
+    maxResults: 50,
     startTime: daysAgoTime,
+    endTime: Date.now(),
   });
 
   const deduplicatedHistoryItems = historyItems.reduce<chrome.history.HistoryItem[]>((acc, item) => {

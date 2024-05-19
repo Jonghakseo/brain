@@ -2,8 +2,10 @@ import {
   calculateImageFileSize,
   type Chat,
   conversationStorage,
+  DONE_PLACEHOLDER,
   LOADING_PLACEHOLDER,
   programStorage,
+  SAVE_PLACEHOLDER,
   settingStorage,
   toolsStorage,
 } from '@chrome-extension-boilerplate/shared';
@@ -12,60 +14,16 @@ import type {
   ChatCompletionMessageParam,
   ChatCompletionUserMessageParam,
 } from 'openai/resources';
-import {
-  billingTools,
-  etcTools,
-  programTools,
-  screenTools,
-  searchTools,
-  settingTools,
-  tabsTools,
-  toolManagingTools,
-  urlTools,
-} from '@lib/background/tools';
 import { Screen } from '@lib/background/program/Screen';
 import { ToolSelector } from '@lib/background/agents/toolSelector';
 import { BaseLLM } from '@lib/background/agents/base';
 import { replaceImageMessages, splitArrayByIndex } from '@lib/background/agents/converters';
 import { ExtensionConfig } from '@chrome-extension-boilerplate/shared/dist/lib/storages/settingStorage';
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const ALL_TOOLS = [
-  ...billingTools,
-  ...settingTools,
-  ...urlTools,
-  ...screenTools,
-  ...etcTools,
-  ...tabsTools,
-  // TODO: this function is unstable
-  // ...domTools,
-];
+import { ALL_TOOLS, anyCall, toolManagingTools } from '@lib/background/tool';
 
 const camelCaseToSentence = (camelCase: string) => {
   return camelCase.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase());
 };
-
-chrome.runtime.onInstalled.addListener(() => {
-  const addCategoryIntoTools =
-    <T>(tools: T[]) =>
-    (categoryName: string) => {
-      return tools.map(tool => ({ ...tool, category: categoryName })) as T & { category: string }[];
-    };
-
-  // Resister all tools when the extension is installed
-  void toolsStorage.registerTools([
-    ...addCategoryIntoTools(toolManagingTools)('Config'),
-    ...addCategoryIntoTools(settingTools)('Config'),
-    ...addCategoryIntoTools(urlTools)('History & Bookmark'),
-    ...addCategoryIntoTools(tabsTools)('Tab Manage & Navigation'),
-    ...addCategoryIntoTools(screenTools)('Search & Screen Capture'),
-    ...addCategoryIntoTools(searchTools)('Search & Screen Capture'),
-    ...addCategoryIntoTools(programTools)('Programs & Macros'),
-    ...addCategoryIntoTools(etcTools)('ETC tools'),
-    ...addCategoryIntoTools(billingTools)('OpenAI Usage'),
-    // ...addCategoryIntoTools(domTools)('dom'),
-  ]);
-});
 
 export class LLM {
   llm: BaseLLM;
@@ -77,124 +35,33 @@ export class LLM {
     this.llm = llm;
   }
 
-  //   async generateProgram(programId: string) {
-  //     const program = await programStorage.getProgram(programId);
-  //     this.llm.tools = ALL_TOOLS;
-  //     this.llm.model = 'gpt-3.5-turbo';
-  //     this.llm.config = {
-  //       maxTokens: 1000,
-  //       topP: 0.5,
-  //       temperature: 0.1,
-  //       systemPrompt: "You're a logical programmer.",
-  //     };
-  //     this.llm.toolChoice = 'none';
-  //     const history: ChatCompletionMessageParam[] = [];
-  //
-  //     const fewShot = [
-  //       `
-  // If i call this program(${program.name}), it will be like this. "${program.description}"\n
-  // How can i make a program logic? Just tell me a plan not execute code. slice it into steps.
-  // like this.
-  //
-  // \`\`\`json
-  // {
-  //   "steps": [
-  //     {
-  //       "step": 1,
-  //       "tool": "getCurrentTabInfo",  // -> REQUIRED
-  //       "description": "This is the first step."
-  //     },
-  //     {
-  //       "step": 2,
-  //       "tool": "navigateTab", // -> REQUIRED
-  //       "description": "This is the second step."
-  //     }
-  //   ]
-  // }
-  // \`\`\
-  // `,
-  //     ];
-  //
-  //     const createChat = async (text: string) => {
-  //       history.push(this.convertChatToOpenAIFormat(makeUserChat({ text })));
-  //       const response = await this.llm.createChatCompletionWithTools({
-  //         messages: history,
-  //       });
-  //       const responseText = response.choices.at(0)?.message.content;
-  //       if (typeof responseText !== 'string') {
-  //         throw new Error('Response text is not string');
-  //       }
-  //       history.push(this.convertChatToOpenAIFormat(makeAssistantChat({ text: responseText })));
-  //       return responseText;
-  //     };
-  //
-  //     function* keepAsking() {
-  //       let MAX_RETRY = 4;
-  //       while (fewShot.length > 0 && MAX_RETRY > 0) {
-  //         MAX_RETRY--;
-  //         const remain = fewShot.shift();
-  //         yield createChat(remain ?? '');
-  //       }
-  //     }
-  //
-  //     const chatGenerator = keepAsking();
-  //     const generatedProgramStructure = z.object({
-  //       steps: z.array(
-  //         z.object({
-  //           step: z.number().or(z.string()),
-  //           tool: z.enum(ALL_TOOLS.map(tool => tool.function.name) as [string, ...string[]]),
-  //         }),
-  //       ),
-  //     });
-  //
-  //     let generatedProgram: z.infer<typeof generatedProgramStructure> | null = null;
-  //     for (const chat of chatGenerator) {
-  //       const answer = await chat;
-  //       console.log('history', history);
-  //       console.log('answer', answer);
-  //       const jsonPart = answer.match(/```json\n([\s\S]+)\n```/);
-  //       if (!jsonPart) {
-  //         continue;
-  //       }
-  //       try {
-  //         const jsonObj = JSON.parse(jsonPart[1]);
-  //         const { success, error } = generatedProgramStructure.safeParse(jsonObj);
-  //         if (success) {
-  //           generatedProgram = jsonObj;
-  //           break;
-  //         } else {
-  //           fewShot.push(`This is zodError, please fix your answer.\n${error?.toString()}`);
-  //         }
-  //       } catch (e) {
-  //         fewShot.push('Error in JSON parse, please fix it.');
-  //         generatedProgram = null;
-  //       }
-  //     }
-  //     if (generatedProgram) {
-  //       await programStorage.updateProgram(programId, { __generated: generatedProgram });
-  //     }
-  //     return generatedProgram;
-  //   }
-
   async runProgram(programId: string) {
     const { llmConfig, extensionConfig } = await settingStorage.get();
     const program = await programStorage.getProgram(programId);
     if (program.steps.length === 0) {
       throw new Error('Program has no steps');
     }
+
+    const recordPrompt = program.__records?.isUseful
+      ? `This is previous record. It's useful for you. Please check it.\nBut, It just a old record. You should do it new.\n
+      \n${JSON.stringify(program.__records.history, null, 1)}`
+      : '';
+
     const initialPrompt = `You're a Chrome browser automation extension.
     Look at this json structure, and let's try do it. Step by step.
     
     \`\`\`json
     ${JSON.stringify(program.steps, null, 2)}
     \`\`\`
+    
+    ${recordPrompt}
     `;
 
     this.llm.config = {
       ...llmConfig,
       maxTokens: 4000,
-      topP: 0.1,
-      temperature: 0.1,
+      topP: 0.3,
+      temperature: 0.3,
       systemPrompt: "You're a Chrome browser automation extension.",
     };
     this.extensionConfig = {
@@ -203,26 +70,31 @@ export class LLM {
       autoSelectModel: true,
     };
 
-    const createdAt = await conversationStorage.startAIChat();
     const history: ChatCompletionMessageParam[] = [];
     history.push(this.convertChatToOpenAIFormat(makeUserChat({ text: initialPrompt })));
 
     const throttledUpdateAIChat = getThrottledUpdateAIChat();
 
     const createChat = async (chat: Chat, toolName: string) => {
+      const createdAt = await conversationStorage.startAIChat();
       history.push(this.convertChatToOpenAIFormat(chat));
       const useLowModel = await this.determineUseLowModel(history);
       this.llm.model = useLowModel ? 'gpt-3.5-turbo' : 'gpt-4o';
       this.llm.tools = ALL_TOOLS.filter(tool => tool.function?.name === toolName);
+      this.llm.log('STEPS TOOL', this.llm.tools);
+      let functionName: string | null = null;
       const response = await this.llm.createChatCompletionWithTools({
         messages: history,
         onFunctionCall: functionCall => {
-          if (!functionCall?.name) {
+          if (!functionCall?.name || functionCall.name === anyCall.function.name) {
             return;
           }
-          const functionName = camelCaseToSentence(functionCall.name);
+          functionName = camelCaseToSentence(functionCall.name);
           throttledUpdateAIChat(createdAt, `${functionName} ${LOADING_PLACEHOLDER}`);
-          if (functionCall.name === 'captureRequest') {
+          if (
+            functionCall.name === 'captureRequest' ||
+            functionCall.arguments?.includes('"toolName":"captureRequest"')
+          ) {
             this.scheduleScreenCaptureMessage();
           }
         },
@@ -232,7 +104,11 @@ export class LLM {
       await this.flushScheduledMessageContent(async chat => {
         await createChat(chat, toolName);
       });
-
+      if (functionName) {
+        throttledUpdateAIChat(createdAt, `${functionName} ${DONE_PLACEHOLDER}`);
+      } else {
+        throttledUpdateAIChat(createdAt, DONE_PLACEHOLDER);
+      }
       return responseText;
     };
 
@@ -258,18 +134,30 @@ export class LLM {
       }
     }
 
-    let text = '';
+    const lastMessage = {
+      createdAt: -1,
+      text: '',
+    };
     const stepByStep = keepAsking();
     try {
       for (const chat of stepByStep) {
-        const { response, step } = chat;
-        const responseText = await response;
-        text += `\n# Step ${step.stepIndex}\n${responseText}`;
+        const { step, response } = chat;
+        lastMessage.text = await response;
+        const isLastStep = step.stepIndex === program.steps.length;
+        if (isLastStep) {
+          lastMessage.createdAt = await conversationStorage.startAIChat();
+        }
       }
     } finally {
-      throttledUpdateAIChat(createdAt, text);
-      console.log('HISTORY', history);
+      await programStorage.updateProgram(programId, { __records: { createdAt: Date.now(), history } });
+      if (lastMessage.createdAt !== -1) {
+        await conversationStorage.updateAIChat(
+          lastMessage.createdAt,
+          lastMessage.text + '\n\n' + SAVE_PLACEHOLDER + programId + '\n',
+        );
+      }
     }
+    return history;
   }
 
   async chatCompletionWithHistory(chatContent: Chat['content'], history: Chat[]) {
@@ -285,12 +173,13 @@ export class LLM {
     // Make new user message
     const newMessage = this.convertChatToOpenAIFormat(makeUserChat(chatContent));
     // Create chat completion stream
-    await this.createChatCompletionStream([...historyMessages, newMessage]);
+    let record = await this.createChatCompletionStream([...historyMessages, newMessage]);
 
     // Flush scheduled message content
-    await this.flushScheduledMessageContent(async chat => {
-      await this.chatCompletionWithHistory(chat['content'], history);
+    await this.flushScheduledMessageContent(async pendingChat => {
+      record = await this.chatCompletionWithHistory(pendingChat['content'], history);
     });
+    return record;
   }
 
   private async createChatCompletionStream(_messages: ChatCompletionMessageParam[]) {
@@ -305,7 +194,8 @@ export class LLM {
 
     // Auto tool detection for reduce openai token usage
     if (autoToolSelection) {
-      await this.autoToolDetection(messages);
+      const detectedTools = await this.autoToolDetection(messages);
+      this.llm.tools = detectedTools ?? this.llm.tools;
     }
 
     // Auto select model by messages. It depends on autoSelectModel setting
@@ -329,7 +219,7 @@ export class LLM {
         throttledUpdateAIChat(createdAt, text);
       },
       onFunctionCall: functionCall => {
-        if (!functionCall?.name) {
+        if (!functionCall?.name || functionCall.name === anyCall.function.name) {
           return;
         }
         const functionName = camelCaseToSentence(functionCall.name);
@@ -337,13 +227,15 @@ export class LLM {
           createdAt,
           text ? `${text}\n${functionName}...` : `${functionName}` + '  ' + LOADING_PLACEHOLDER,
         );
-        if (functionCall.name === 'captureRequest') {
+        if (functionCall.name === 'captureRequest' || functionCall.arguments?.includes('"toolName":"captureRequest"')) {
           this.scheduleScreenCaptureMessage();
         }
       },
     });
+    messages.push(this.convertChatToOpenAIFormat(makeAssistantChat({ text })));
 
     return {
+      messages,
       createdAt,
     };
   }
@@ -385,9 +277,9 @@ export class LLM {
     if (hasImage) {
       return false;
     }
-    // check has screen capture tool into active tools
     const activateTools = this.llm.tools.map(tool => tool.function.name);
-    if (activateTools.length > 5) {
+    // check has too many tools
+    if (activateTools.length > 10) {
       return false;
     }
     return true;
@@ -400,9 +292,11 @@ export class LLM {
     try {
       const selector = new ToolSelector();
       // Max 10 messages for auto tool detection
-      await selector.selectTool(messages.slice(-10));
+      const detectedTools = await selector.selectTool(messages.slice(-10));
+      return ALL_TOOLS.filter(tool => detectedTools.includes(tool.function.name ?? 'NONE'));
     } catch (e) {
       console.warn('Error in AutoToolDetection', e);
+      return;
     }
   }
 

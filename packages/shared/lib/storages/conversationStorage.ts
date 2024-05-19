@@ -2,7 +2,10 @@ import { BaseStorage, createStorage, StorageType } from './base';
 import { Chat } from '../message';
 
 export type ConversationLoadingPlaceholder = '++LOADING++';
+
 export const LOADING_PLACEHOLDER: ConversationLoadingPlaceholder = '++LOADING++';
+export const DONE_PLACEHOLDER = '++DONE++';
+export const SAVE_PLACEHOLDER = '++SAVE++';
 
 type Conversation = {
   chats: Chat[];
@@ -17,6 +20,7 @@ type ConversationStorage = BaseStorage<Conversation> & {
   getLastAIChat: () => Promise<Chat | undefined>;
   deleteChat: (createdAt: number) => Promise<void>;
   reset: () => Promise<void>;
+  removeAllPlaceholder: (type: 'loading') => Promise<void>;
 };
 
 const storage = createStorage<Conversation>(
@@ -98,5 +102,18 @@ export const conversationStorage: ConversationStorage = {
       .map(({ chat }) => chat)
       .pop();
     return lastAIChat;
+  },
+  removeAllPlaceholder: async type => {
+    if (type === 'loading') {
+      await storage.set(prev => ({
+        ...prev,
+        chats: prev.chats?.map(chat => {
+          if (chat.content.text?.includes(LOADING_PLACEHOLDER)) {
+            return { ...chat, content: { text: chat.content.text.replace(LOADING_PLACEHOLDER, '') } };
+          }
+          return chat;
+        }),
+      }));
+    }
   },
 };

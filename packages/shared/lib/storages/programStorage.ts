@@ -16,6 +16,12 @@ export type Program = {
   name: string;
   steps: Array<{ id: string | number; tool: string; whatToDo: string }>;
   isPinned: boolean;
+  useRecord?: boolean;
+  __records?: {
+    createdAt?: number;
+    history?: unknown[];
+    isUseful?: boolean;
+  };
 };
 
 type ProgramStorage = BaseStorage<Store> & {

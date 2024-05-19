@@ -34,8 +34,11 @@ chrome.runtime.onConnect.addListener(port => {
         case 'Chat': {
           const baseLLM = new OpenAiLLM();
           const llm = new LLM(baseLLM);
-          await llm.chatCompletionWithHistory(message.payload.content, message.payload.history ?? []);
-          sendResponse({ type: 'Chat', response: null });
+          const { messages } = await llm.chatCompletionWithHistory(
+            message.payload.content,
+            message.payload.history ?? [],
+          );
+          sendResponse({ type: 'Chat', response: messages });
           break;
         }
         // case 'GenerateProgram': {

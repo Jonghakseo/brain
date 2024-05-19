@@ -17,7 +17,7 @@ export interface ChatMessage extends BaseMessage {
     content: Chat['content'];
     history?: Chat[];
   };
-  response: null;
+  response: unknown;
 }
 
 // export interface GenerateProgramMessage extends BaseMessage {

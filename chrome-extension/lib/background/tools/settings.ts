@@ -8,9 +8,9 @@ async function getAiConfig() {
 }
 
 const UpdateAiConfigSchema = z.object({
-  maxTokens: z.number().min(1).max(4096),
-  topP: z.number().min(0).max(1),
-  temperature: z.number().min(0).max(2),
+  maxTokens: z.number().min(1).max(4096).optional(),
+  topP: z.number().min(0).max(1).optional(),
+  temperature: z.number().min(0).max(2).optional(),
 });
 
 async function updateAiConfig(params: z.infer<typeof UpdateAiConfigSchema>) {
