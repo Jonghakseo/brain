@@ -17,7 +17,7 @@ export default function Modal({ isOpen, onClose, children, header, className = '
         aria-hidden={isOpen ? 'false' : 'true'}
         className={
           (isOpen ? '' : 'hidden ') +
-          'flex overflow-y-auto overflow-x-hidden fixed top-0 right-0 left-0 z-50 justify-center items-center w-full md:inset-0 h-[100%] max-h-full '
+          'flex overflow-y-auto overflow-x-hidden fixed top-0 right-0 left-0 z-40 justify-center items-center w-full md:inset-0 h-[100%] max-h-full '
         }>
         {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
         <div

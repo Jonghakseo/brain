@@ -1,9 +1,7 @@
 import { Program, programStorage, toolsStorage, useStorage } from '@chrome-extension-boilerplate/shared';
-import { memo, useMemo, useState } from 'react';
-import { Option, Select } from '@material-tailwind/react';
-
-const UNCATEGORIZED = 'Uncategorized';
-const JUST_THINK = 'Just Think';
+import { memo } from 'react';
+import { Chip, Typography } from '@material-tailwind/react';
+import PopoverWithHover from '@src/components/PopoverWithHover';
 
 type ToolCategoryAndToolSelectProps = {
   programId: Program['id'];
@@ -14,12 +12,7 @@ const ToolCategoryAndToolSelect = ({ stepId, programId }: ToolCategoryAndToolSel
   const tools = useStorage(toolsStorage);
   const { programs } = useStorage(programStorage);
 
-  const [selectedCategory, setSelectedCategory] = useState<string | undefined>();
   const selectedProgram = programs.find(program => program.id === programId);
-  const toolCategories = useMemo(() => {
-    return [JUST_THINK, ...Array.from(new Set(tools.map(tool => tool.category ?? UNCATEGORIZED)))];
-  }, [tools]);
-
   if (!selectedProgram) {
     return null;
   }
@@ -27,17 +20,16 @@ const ToolCategoryAndToolSelect = ({ stepId, programId }: ToolCategoryAndToolSel
   if (!stepInfo) {
     return null;
   }
-  const selectedTool = stepInfo?.tool ?? '';
-  console.log(selectedTool);
-  const selectedToolsCategory = tools.find(tool => tool.name === selectedTool)?.category ?? JUST_THINK;
 
-  const category = selectedCategory ?? selectedToolsCategory;
-
-  const makeToolEmpty = () => {
+  const toggleTool = (tool: string) => {
     void programStorage.updateProgram(selectedProgram.id, {
       steps: selectedProgram.steps.map(step => {
+        console.log(step);
         if (step.id === stepId) {
-          return { ...step, tool: '' };
+          return {
+            ...step,
+            tools: step.tools?.includes(tool) ? step.tools?.filter(t => t !== tool) : [...(step.tools ?? []), tool],
+          };
         }
         return step;
       }),
@@ -45,51 +37,30 @@ const ToolCategoryAndToolSelect = ({ stepId, programId }: ToolCategoryAndToolSel
   };
 
   return (
-    <>
-      <Select
-        label="Tool Category"
-        className="capitalize"
-        value={category}
-        onChange={value => {
-          makeToolEmpty();
-          setSelectedCategory(value);
-        }}>
-        {toolCategories.map(toolCategory => (
-          <Option key={toolCategory} value={toolCategory}>
-            {toolCategory}
-          </Option>
-        ))}
-      </Select>
-      {category !== JUST_THINK && (
-        <Select
-          label="Tools"
-          error={tools.every(_tool => _tool.name !== selectedTool)}
-          className="capitalize"
-          defaultValue={selectedTool}
-          value={selectedTool}
-          onChange={value => {
-            void programStorage.updateProgram(selectedProgram.id, {
-              steps: selectedProgram.steps.map(step => {
-                if (step.id === stepId) {
-                  return {
-                    ...step,
-                    tool: value ?? '',
-                  };
-                }
-                return step;
-              }),
-            });
-          }}>
-          {tools
-            .filter(_tool => (_tool.category ?? UNCATEGORIZED) === category)
-            .map(tool => (
-              <Option key={tool.name} value={tool.name} className="capitalize">
-                [{tool.name}] {tool.description}
-              </Option>
-            ))}
-        </Select>
-      )}
-    </>
+    <section className="grid grid-cols-4 gap-2">
+      {tools?.map(tool => {
+        const isSelected = stepInfo.tools?.includes(tool.name);
+        return (
+          <PopoverWithHover
+            key={tool.name}
+            content={
+              <Typography as="p" className="text-sm font-semibold">
+                {tool.description}
+              </Typography>
+            }>
+            <div className="cursor-pointer overflow-x-hidden" onClick={() => toggleTool(tool.name)}>
+              <Chip
+                className="!capitalize"
+                size="sm"
+                value={tool.name}
+                variant={isSelected ? 'filled' : 'outlined'}
+                color="gray"
+              />
+            </div>
+          </PopoverWithHover>
+        );
+      })}
+    </section>
   );
 };
 

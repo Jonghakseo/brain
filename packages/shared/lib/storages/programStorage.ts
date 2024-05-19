@@ -14,7 +14,7 @@ export type Runner = {
 export type Program = {
   id: string;
   name: string;
-  steps: Array<{ id: string | number; tool: string; whatToDo: string }>;
+  steps: Array<{ id: string | number; tools: string[]; whatToDo: string }>;
   isPinned: boolean;
   useRecord?: boolean;
   __records?: {
@@ -34,7 +34,7 @@ type ProgramStorage = BaseStorage<Store> & {
 };
 
 const storage = createStorage<Store>(
-  'program',
+  'programStorage',
   {
     runners: [],
     programs: [],

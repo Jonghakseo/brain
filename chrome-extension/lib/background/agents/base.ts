@@ -11,6 +11,7 @@ export abstract class BaseLLM {
   tools: RunnableTools<any[]> = [];
   toolChoice: 'required' | 'auto' | 'none' = 'auto';
   isJson: boolean = false;
+  useAnyCall: boolean = true;
 
   abstract saveUsage(usage: unknown): Promise<void>;
 

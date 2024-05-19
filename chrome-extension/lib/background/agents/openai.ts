@@ -21,6 +21,7 @@ export class OpenAiLLM implements BaseLLM {
   tools: RunnableTools<any[]> = [];
   toolChoice: 'required' | 'auto' | 'none' = 'auto';
   isJson = false;
+  useAnyCall = true;
 
   constructor() {
     this.model = 'gpt-4o';
@@ -143,7 +144,7 @@ export class OpenAiLLM implements BaseLLM {
       temperature,
       max_tokens: maxTokens,
       top_p: topP,
-      tools: [anyCall, ...this.tools],
+      tools: this.useAnyCall ? this.tools.concat(anyCall) : this.tools,
       tool_choice: this.toolChoice,
       response_format: {
         type: this.isJson ? 'json_object' : 'text',
@@ -225,7 +226,7 @@ export class OpenAiLLM implements BaseLLM {
         top_p: topP,
         stream: true,
         stream_options: { include_usage: true },
-        tools: [anyCall, ...this.tools],
+        tools: this.useAnyCall ? this.tools.concat(anyCall) : this.tools,
         tool_choice: this.toolChoice,
         response_format: {
           type: this.isJson ? 'json_object' : 'text',

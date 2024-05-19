@@ -7,7 +7,7 @@ const TabInfo = z.object({
   title: z.string().optional(),
   width: z.number().optional(),
   height: z.number().optional(),
-  groupId: z.number(),
+  groupId: z.number().optional(),
   windowId: z.number().optional(),
   lastAccessed: z.number().optional(),
 });
@@ -22,7 +22,16 @@ function convertTabToTabInfo({
   windowId,
   lastAccessed,
 }: chrome.tabs.Tab): z.infer<typeof TabInfo> {
-  return { id, url, groupId, title, width, height, windowId, lastAccessed };
+  return {
+    id,
+    url,
+    groupId: groupId === -1 ? undefined : groupId,
+    title,
+    width,
+    height,
+    windowId: windowId === -1 ? undefined : windowId,
+    lastAccessed,
+  };
 }
 
 const GetTabsInfoParams = z.object({
@@ -40,11 +49,7 @@ async function getCurrentTabInfo() {
   const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
   const activeTab = tabs.at(0);
 
-  if (activeTab?.id) {
-    return convertTabToTabInfo(activeTab);
-  } else {
-    return undefined;
-  }
+  return { tab: activeTab?.id ? convertTabToTabInfo(activeTab) : undefined };
 }
 
 const NavigateTabParams = z.object({
@@ -70,7 +75,7 @@ async function navigateTab(params: z.infer<typeof NavigateTabParams>) {
         if (!params.url) {
           return { success: false, reason: 'url is required' };
         }
-        const tab = await getCurrentTabInfo();
+        const { tab } = await getCurrentTabInfo();
         try {
           const tabId = tab?.id ?? params.tabId;
           if (!tabId) {
@@ -106,30 +111,32 @@ async function navigateTab(params: z.infer<typeof NavigateTabParams>) {
 }
 
 const TabGroupParams = z.object({
-  action: z.enum(['group', 'ungroup']),
   groupId: z.number().optional(),
   windowId: z.number().optional(),
   tabIds: z.array(z.number()),
 });
 
 async function tabGroup(params: z.infer<typeof TabGroupParams>) {
+  const { groupId, tabIds } = { ...params };
   try {
-    switch (params.action) {
-      case 'group': {
-        if (params.groupId === undefined) {
-          const groupId = await chrome.tabs.group({
-            tabIds: params.tabIds,
-            createProperties: { windowId: params.windowId },
-          });
-          return { success: true, groupId };
-        }
-        await chrome.tabs.group({ tabIds: params.tabIds, groupId: params.groupId });
-        break;
-      }
-      case 'ungroup':
-        await chrome.tabs.ungroup(params.tabIds);
-        break;
+    if (groupId === undefined) {
+      await chrome.tabs.group({ tabIds: [...tabIds] });
     }
+    await chrome.tabs.group({ tabIds: [...tabIds], groupId });
+    return { success: true };
+  } catch (e) {
+    console.warn("Couldn't group tabs", e);
+    return { success: false, reason: (e as Error).message };
+  }
+}
+
+const TabUnGroupParams = z.object({
+  tabIds: z.array(z.number()),
+});
+
+async function tabUnGroup(params: z.infer<typeof TabUnGroupParams>) {
+  try {
+    await chrome.tabs.ungroup(params.tabIds);
     return { success: true };
   } catch (e) {
     console.error(e);
@@ -200,13 +207,7 @@ async function updateTabGroup(params: z.infer<typeof UpdateTabGroupParams>) {
 export const tabsTools = [
   zodFunction({
     name: 'getCurrentTabInfo',
-    function: async () => {
-      const tab = await getCurrentTabInfo();
-      if (!tab) {
-        return { success: false, reason: 'Tab not found' };
-      }
-      return tab;
-    },
+    function: getCurrentTabInfo,
     schema: z.object({}),
     description: 'Get the current tab information. (like url, title, tabId, etc.)',
   }),
@@ -223,7 +224,12 @@ export const tabsTools = [
   zodFunction({
     function: tabGroup,
     schema: TabGroupParams,
-    description: 'Group or ungroup tabs.',
+    description: 'Group tabs.',
+  }),
+  zodFunction({
+    function: tabUnGroup,
+    schema: TabUnGroupParams,
+    description: 'Ungroup tabs.',
   }),
   zodFunction({
     function: tabCreateOrRemove,

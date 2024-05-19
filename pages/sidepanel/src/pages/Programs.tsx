@@ -10,7 +10,6 @@ export default function Programs() {
   const tools = useStorage(toolsStorage);
   const [selectedProgramId, setSelectedProgramId] = useState<Program['id'] | undefined>(undefined);
   const selectedProgram = programs.find(program => program.id === selectedProgramId);
-  // const selectedProgram = programs.at(0);
   const openStepModal = (programId: string) => {
     setSelectedProgramId(programId);
   };

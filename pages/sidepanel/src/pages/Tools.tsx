@@ -2,6 +2,7 @@ import Layout from '@src/components/Layout';
 import { Popover, PopoverContent, PopoverHandler, Switch, Typography } from '@material-tailwind/react';
 import { toolsStorage, useStorage } from '@chrome-extension-boilerplate/shared';
 import { Fragment, useState } from 'react';
+import PopoverWithHover from '@src/components/PopoverWithHover';
 
 export default function Tools() {
   const tools = useStorage(toolsStorage);
@@ -71,28 +72,5 @@ export default function Tools() {
         })}
       </article>
     </Layout>
-  );
-}
-
-type PopoverWithHoverProps = {
-  children: React.ReactNode;
-  content: React.ReactNode;
-};
-
-function PopoverWithHover({ children, content }: PopoverWithHoverProps) {
-  const [open, setOpen] = useState(false);
-
-  const triggers = {
-    onMouseEnter: () => setOpen(true),
-    onMouseLeave: () => setOpen(false),
-  };
-
-  return (
-    <Popover open={open} handler={setOpen}>
-      <PopoverHandler>
-        <div {...triggers}>{children}</div>
-      </PopoverHandler>
-      <PopoverContent>{content}</PopoverContent>
-    </Popover>
   );
 }

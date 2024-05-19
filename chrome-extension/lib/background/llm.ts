@@ -60,8 +60,8 @@ export class LLM {
     this.llm.config = {
       ...llmConfig,
       maxTokens: 4000,
-      topP: 0.3,
-      temperature: 0.3,
+      topP: 0.5,
+      temperature: 0.5,
       systemPrompt: "You're a Chrome browser automation extension.",
     };
     this.extensionConfig = {
@@ -75,12 +75,13 @@ export class LLM {
 
     const throttledUpdateAIChat = getThrottledUpdateAIChat();
 
-    const createChat = async (chat: Chat, toolName: string) => {
+    const createChat = async (chat: Chat, toolNames: string[]) => {
       const createdAt = await conversationStorage.startAIChat();
       history.push(this.convertChatToOpenAIFormat(chat));
       const useLowModel = await this.determineUseLowModel(history);
       this.llm.model = useLowModel ? 'gpt-3.5-turbo' : 'gpt-4o';
-      this.llm.tools = ALL_TOOLS.filter(tool => tool.function?.name === toolName);
+      this.llm.useAnyCall = false; // prevent any call
+      this.llm.tools = ALL_TOOLS.filter(tool => toolNames.includes(tool.function?.name ?? 'NONE'));
       this.llm.log('STEPS TOOL', this.llm.tools);
       let functionName: string | null = null;
       const response = await this.llm.createChatCompletionWithTools({
@@ -98,11 +99,14 @@ export class LLM {
             this.scheduleScreenCaptureMessage();
           }
         },
+        onFunctionCallResult: functionCallResult => {
+          history.push(this.convertChatToOpenAIFormat(makeAssistantChat({ text: functionCallResult })));
+        },
       });
-      const responseText = response.choices.at(0)?.message.content ?? 'None';
+      const responseText = response.choices.at(0)?.message.content ?? 'NONE';
       history.push(this.convertChatToOpenAIFormat(makeAssistantChat({ text: responseText })));
       await this.flushScheduledMessageContent(async chat => {
-        await createChat(chat, toolName);
+        await createChat(chat, toolNames);
       });
       if (functionName) {
         throttledUpdateAIChat(createdAt, `${functionName} ${DONE_PLACEHOLDER}`);
@@ -115,10 +119,10 @@ export class LLM {
     function* keepAsking() {
       const stepsForProgram = program.steps.map((step, index) => {
         const stepIndex = index + 1;
-        const toolText = step.tool ? `You can use ${step.tool} tool. ` : '';
+        const toolText = step.tools.length > 0 ? `You can use ${step.tools.join(', ')} tools. ` : '';
         return {
           stepIndex,
-          tool: step.tool,
+          tools: step.tools,
           prompt: `This is step #${stepIndex}. ${toolText} for ${step.whatToDo}.
           Your answer will be used by next step. so, please write it with detail information.
           `,
@@ -129,7 +133,7 @@ export class LLM {
         if (!step) {
           break;
         }
-        const response = createChat(makeUserChat({ text: step.prompt }), step.tool);
+        const response = createChat(makeUserChat({ text: step.prompt }), step.tools);
         yield { response, step };
       }
     }

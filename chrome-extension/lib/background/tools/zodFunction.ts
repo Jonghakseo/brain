@@ -27,7 +27,7 @@ export function zodFunction<T extends object>({
     function: {
       function: async (args, runner) => {
         // Add a small delay prevent concurrent issues
-        await delay(250);
+        await delay(100);
         // eslint-disable-next-line @typescript-eslint/ban-ts-comment
         // @ts-ignore
         return fn(args, runner);
@@ -50,13 +50,13 @@ export function zodFunction<T extends object>({
 const removeSomeFields = (obj: unknown) => {
   const target = JSON.parse(JSON.stringify(obj));
   const deleteProperties = [
-    'additionalProperties',
+    // 'additionalProperties',
     '$schema',
-    'maximum',
-    'minimum',
-    'default',
-    'minItems',
-    'exclusiveMinimum',
+    // 'maximum',
+    // 'minimum',
+    // 'default',
+    // 'minItems',
+    // 'exclusiveMinimum',
   ];
   const removeProperties = (_obj: Record<string, unknown>) => {
     for (const key in _obj) {
