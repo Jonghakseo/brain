@@ -1,5 +1,6 @@
 import {
   billingTools,
+  domTools,
   etcTools,
   programTools,
   screenTools,
@@ -26,6 +27,7 @@ const ALL_TOOLS_WITH_CATEGORY = [
   ...addCategoryIntoTools(programTools)('Programs & Macros'),
   ...addCategoryIntoTools(etcTools)('ETC tools'),
   ...addCategoryIntoTools(billingTools)('OpenAI Usage'),
+  ...addCategoryIntoTools(domTools)('Dom Action'),
 ];
 
 // eslint-disable-next-line
@@ -39,6 +41,7 @@ export const ALL_TOOLS = [
   ...programTools,
   ...etcTools,
   ...billingTools,
+  ...domTools,
 ];
 
 chrome.runtime.onInstalled.addListener(() => {

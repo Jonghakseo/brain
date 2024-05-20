@@ -68,7 +68,6 @@ export class LLM {
     this.extensionConfig = {
       ...extensionConfig,
       autoToolSelection: false,
-      autoSelectModel: true,
     };
 
     const history: ChatCompletionMessageParam[] = [];
@@ -81,12 +80,10 @@ export class LLM {
       this.llm.tools = ALL_TOOLS.filter(tool => toolNames.includes(tool.function?.name ?? 'NONE'));
       const createdAt = await conversationStorage.startAIChat();
       history.push(this.convertChatToOpenAIFormat(chat));
-      const useLowModel = await this.determineUseLowModel(history);
-      const hasMutation = this.llm.tools.some(tool => {
-        const properties = tool.function?.parameters?.properties;
-        return Object.keys(properties ?? {}).length > 0;
-      });
-      this.llm.model = useLowModel && !hasMutation ? 'gpt-3.5-turbo' : 'gpt-4o';
+      if (this.extensionConfig?.autoToolSelection) {
+        const useLowModel = await this.determineUseLowModel(history);
+        this.llm.model = useLowModel ? 'gpt-3.5-turbo' : 'gpt-4o';
+      }
       this.llm.log('STEPS TOOL', this.llm.tools);
       let functionName: string | null = null;
       let functionNameRaw: string | null = null;
