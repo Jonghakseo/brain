@@ -4,13 +4,7 @@ import { useState } from 'react';
 import { Button, IconButton, Spinner, Typography } from '@material-tailwind/react';
 import ImageViewModal from '@src/components/ImageViewModal';
 import remarkGfm from 'remark-gfm';
-import {
-  Chat,
-  DONE_PLACEHOLDER,
-  LOADING_PLACEHOLDER,
-  programStorage,
-  SAVE_PLACEHOLDER,
-} from '@chrome-extension-boilerplate/shared';
+import { Chat, DONE_PLACEHOLDER, LOADING_PLACEHOLDER, SAVE_PLACEHOLDER } from '@chrome-extension-boilerplate/shared';
 
 type ChatBoxProps = {
   className?: string;
@@ -85,20 +79,20 @@ export default function ChatBox({ createdAt, className = '', image, text }: Chat
               return (
                 <div {...rest}>
                   {before}
-                  <div
-                    className="inline text-green-600 text-xs cursor-pointer"
-                    onClick={() => markProgramRecordIsUseful(programId)}>
-                    <IconButton variant="text" className="w-5 h-5 inline text-green-600">
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        viewBox="0 0 16 16"
-                        fill="currentColor"
-                        className="w-4 h-4">
-                        <path d="M3.75 2a.75.75 0 0 0-.75.75v10.5a.75.75 0 0 0 1.28.53L8 10.06l3.72 3.72a.75.75 0 0 0 1.28-.53V2.75a.75.75 0 0 0-.75-.75h-8.5Z" />
-                      </svg>
-                    </IconButton>
-                    Save this Record
-                  </div>
+                  {/*<div*/}
+                  {/*  className="inline text-green-600 text-xs cursor-pointer"*/}
+                  {/*  onClick={() => markProgramRecordIsUseful(programId)}>*/}
+                  {/*  <IconButton variant="text" className="w-5 h-5 inline text-green-600">*/}
+                  {/*    <svg*/}
+                  {/*      xmlns="http://www.w3.org/2000/svg"*/}
+                  {/*      viewBox="0 0 16 16"*/}
+                  {/*      fill="currentColor"*/}
+                  {/*      className="w-4 h-4">*/}
+                  {/*      <path d="M3.75 2a.75.75 0 0 0-.75.75v10.5a.75.75 0 0 0 1.28.53L8 10.06l3.72 3.72a.75.75 0 0 0 1.28-.53V2.75a.75.75 0 0 0-.75-.75h-8.5Z" />*/}
+                  {/*    </svg>*/}
+                  {/*  </IconButton>*/}
+                  {/*  Save this Record*/}
+                  {/*</div>*/}
                 </div>
               );
             }
@@ -183,7 +177,7 @@ function CopyToClipboardIconButton({ copyText }: { copyText: string }) {
   );
 }
 
-const markProgramRecordIsUseful = async (programId: string) => {
-  const program = await programStorage.getProgram(programId);
-  await programStorage.updateProgram(programId, { __records: { ...program.__records, isUseful: true } });
-};
+// const markProgramRecordIsUseful = async (programId: string) => {
+//   const program = await programStorage.getProgram(programId);
+//   await programStorage.updateProgram(programId, { __records: { ...program.__records, isUseful: true } });
+// };

@@ -2,6 +2,7 @@ import { Program, programStorage, toolsStorage, useStorage } from '@chrome-exten
 import { memo } from 'react';
 import { Chip, Typography } from '@material-tailwind/react';
 import PopoverWithHover from '@src/components/PopoverWithHover';
+import { colors } from '@material-tailwind/react/types/generic';
 
 type ToolCategoryAndToolSelectProps = {
   programId: Program['id'];
@@ -36,6 +37,15 @@ const ToolCategoryAndToolSelect = ({ stepId, programId }: ToolCategoryAndToolSel
     });
   };
 
+  const categoryColorMap = Array.from(new Set(tools.map(tool => tool.category ?? 'Uncategorized'))).reduce<
+    Record<string, colors>
+  >((acc, category, currentIndex) => {
+    return {
+      ...acc,
+      [category]: colorArray[currentIndex],
+    };
+  }, {});
+  console.log(programs);
   return (
     <section className="grid grid-cols-4 gap-2">
       {tools?.map(tool => {
@@ -54,7 +64,7 @@ const ToolCategoryAndToolSelect = ({ stepId, programId }: ToolCategoryAndToolSel
                 size="sm"
                 value={tool.name}
                 variant={isSelected ? 'filled' : 'outlined'}
-                color="gray"
+                color={tool.category ? categoryColorMap[tool.category] : 'gray'}
               />
             </div>
           </PopoverWithHover>
@@ -65,3 +75,20 @@ const ToolCategoryAndToolSelect = ({ stepId, programId }: ToolCategoryAndToolSel
 };
 
 export default memo(ToolCategoryAndToolSelect);
+
+const colorArray: colors[] = [
+  'red',
+  'blue',
+  'green',
+  'yellow',
+  'purple',
+  'indigo',
+  'pink',
+  'orange',
+  'teal',
+  'cyan',
+  'light-blue',
+  'lime',
+  'amber',
+  'gray',
+];

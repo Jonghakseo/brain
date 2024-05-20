@@ -1,5 +1,5 @@
 import Layout from '@src/components/Layout';
-import { Program, programStorage, toolsStorage, useStorage } from '@chrome-extension-boilerplate/shared';
+import { Program, programStorage, useStorage } from '@chrome-extension-boilerplate/shared';
 import { Button, Input, Switch, Textarea, Typography } from '@material-tailwind/react';
 import Modal from '@src/components/Modal';
 import { useState } from 'react';
@@ -7,7 +7,6 @@ import ToolCategoryAndToolSelect from '@src/components/ToolCategoryAndToolSelect
 
 export default function Programs() {
   const { programs } = useStorage(programStorage);
-  const tools = useStorage(toolsStorage);
   const [selectedProgramId, setSelectedProgramId] = useState<Program['id'] | undefined>(undefined);
   const selectedProgram = programs.find(program => program.id === selectedProgramId);
   const openStepModal = (programId: string) => {
@@ -56,13 +55,13 @@ export default function Programs() {
                   defaultChecked={program.isPinned}
                   onChange={() => programStorage.updateProgram(program.id, { isPinned: !program.isPinned })}
                 />
-                {program.__records?.isUseful && (
-                  <Switch
-                    label="UseRecord"
-                    defaultChecked={!!program.useRecord}
-                    onChange={() => programStorage.updateProgram(program.id, { useRecord: !program.useRecord })}
-                  />
-                )}
+                {/*{program.__records?.isUseful && (*/}
+                {/*  <Switch*/}
+                {/*    label="UseRecord"*/}
+                {/*    defaultChecked={!!program.useRecord}*/}
+                {/*    onChange={() => programStorage.updateProgram(program.id, { useRecord: !program.useRecord })}*/}
+                {/*  />*/}
+                {/*)}*/}
               </div>
               <Button color="red" variant="outlined" size="sm" onClick={() => programStorage.removeProgram(program.id)}>
                 Delete
@@ -75,7 +74,7 @@ export default function Programs() {
         {selectedProgram && (
           <div className="pt-2">
             {selectedProgram?.steps.map((stepInfo, index) => {
-              const { id, tool, whatToDo } = stepInfo;
+              const { id, tools, whatToDo } = stepInfo;
               return (
                 <div key={id} className="flex flex-col gap-4 pt-4">
                   <Typography as="h2" className="text-lg font-semibold shrink-0">
@@ -83,7 +82,7 @@ export default function Programs() {
                   </Typography>
                   <ToolCategoryAndToolSelect programId={selectedProgram.id} stepId={id} />
                   <Textarea
-                    label={'What to do with ' + tool}
+                    label={'What to do with ' + tools?.join(', ')}
                     defaultValue={whatToDo}
                     onChange={e => {
                       void programStorage.updateProgram(selectedProgram.id, {
@@ -105,7 +104,7 @@ export default function Programs() {
                             {
                               id: Date.now(),
                               whatToDo: selectedProgram.steps[index].whatToDo,
-                              tool: selectedProgram.steps[index].tool,
+                              tools: selectedProgram.steps[index].tools,
                             },
                             ...selectedProgram.steps.slice(index + 1),
                           ],
@@ -139,7 +138,7 @@ export default function Programs() {
                     {
                       id: Date.now(),
                       whatToDo: '',
-                      tool: tools[0].name,
+                      tools: [],
                     },
                   ],
                 });

@@ -1,9 +1,9 @@
 import { toolsStorage } from '@chrome-extension-boilerplate/shared';
 import { ChatCompletionMessageParam, ChatCompletionUserMessageParam } from 'openai/resources';
-import { OpenAiLLM } from '@lib/background/agents/openai';
+import { OpenAILLM } from '@lib/background/agents/openai';
 import { replaceImageMessages } from '@lib/background/agents/converters';
 
-export class ToolSelector extends OpenAiLLM {
+export class ToolSelector extends OpenAILLM {
   name = 'ToolSelector';
 
   constructor() {

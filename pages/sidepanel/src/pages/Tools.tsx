@@ -1,7 +1,7 @@
 import Layout from '@src/components/Layout';
-import { Popover, PopoverContent, PopoverHandler, Switch, Typography } from '@material-tailwind/react';
+import { Switch, Typography } from '@material-tailwind/react';
 import { toolsStorage, useStorage } from '@chrome-extension-boilerplate/shared';
-import { Fragment, useState } from 'react';
+import { Fragment } from 'react';
 import PopoverWithHover from '@src/components/PopoverWithHover';
 
 export default function Tools() {

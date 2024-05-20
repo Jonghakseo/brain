@@ -3,7 +3,7 @@ import 'webextension-polyfill';
 import type { Message } from '@chrome-extension-boilerplate/shared';
 import { LLM } from '@lib/background/llm';
 import { Screen } from '@lib/background/program/Screen';
-import { OpenAiLLM } from '@lib/background/agents/openai';
+import { OpenAILLM } from '@lib/background/agents/openai';
 
 /**
  * when click the extension icon, open(or close) the side panel automatically
@@ -32,7 +32,7 @@ chrome.runtime.onConnect.addListener(port => {
           break;
         }
         case 'Chat': {
-          const baseLLM = new OpenAiLLM();
+          const baseLLM = new OpenAILLM();
           const llm = new LLM(baseLLM);
           const { messages } = await llm.chatCompletionWithHistory(
             message.payload.content,
@@ -42,14 +42,14 @@ chrome.runtime.onConnect.addListener(port => {
           break;
         }
         // case 'GenerateProgram': {
-        //   const baseLLM = new OpenAiLLM();
+        //   const baseLLM = new OpenAILLM();
         //   const llm = new LLM(baseLLM);
         //   // const generated = await llm.generateProgram(message.payload.programId);
         //   // sendResponse({ type: 'GenerateProgram', response: generated });
         //   break;
         // }
         case 'RunProgram': {
-          const baseLLM = new OpenAiLLM();
+          const baseLLM = new OpenAILLM();
           const llm = new LLM(baseLLM);
           const program = await llm.runProgram(message.payload.programId);
           sendResponse({ type: 'RunProgram', response: program });

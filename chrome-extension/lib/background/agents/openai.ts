@@ -12,8 +12,8 @@ import { ChatCompletionRunner } from 'openai/lib/ChatCompletionRunner';
 import { BaseLLM } from '@lib/background/agents/base';
 import { anyCall } from '@lib/background/tool';
 
-export class OpenAiLLM implements BaseLLM {
-  name: string = 'OpenAiLLM';
+export class OpenAILLM implements BaseLLM {
+  name: string = 'OpenAILLM';
   client: OpenAI;
   model: Extract<ChatModel, 'gpt-4o' | 'gpt-3.5-turbo'>;
   config: LLMConfig | null = null;

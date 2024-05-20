@@ -2,18 +2,18 @@ import { z } from 'zod';
 import { zodFunction } from './zodFunction';
 import { settingStorage, toolsStorage } from '@chrome-extension-boilerplate/shared';
 
-async function getAiConfig() {
+async function getAIConfig() {
   const { llmConfig } = await settingStorage.get();
   return llmConfig;
 }
 
-const UpdateAiConfigSchema = z.object({
+const UpdateAIConfigSchema = z.object({
   maxTokens: z.number().min(1).max(4096).optional(),
   topP: z.number().min(0).max(1).optional(),
   temperature: z.number().min(0).max(2).optional(),
 });
 
-async function updateAiConfig(params: z.infer<typeof UpdateAiConfigSchema>) {
+async function updateAIConfig(params: z.infer<typeof UpdateAIConfigSchema>) {
   for await (const key of Object.keys(params)) {
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore
@@ -25,13 +25,13 @@ async function updateAiConfig(params: z.infer<typeof UpdateAiConfigSchema>) {
 
 export const settingTools = [
   zodFunction({
-    function: getAiConfig,
+    function: getAIConfig,
     schema: z.object({}),
     description: 'Get This AI(LLM) config',
   }),
   zodFunction({
-    function: updateAiConfig,
-    schema: UpdateAiConfigSchema,
+    function: updateAIConfig,
+    schema: UpdateAIConfigSchema,
     description: 'Update AI(LLM) config and return the updated config',
   }),
 ];
