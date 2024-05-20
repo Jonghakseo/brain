@@ -114,12 +114,13 @@ const TabGroupParams = z.object({
 
 async function tabGroup(params: z.infer<typeof TabGroupParams>) {
   const { groupId, tabIds } = { ...params };
+  let groupedId = groupId;
   try {
     if (groupId === undefined) {
-      await chrome.tabs.group({ tabIds: [...tabIds] });
+      groupedId = await chrome.tabs.group({ tabIds: [...tabIds] });
     }
-    await chrome.tabs.group({ tabIds: [...tabIds], groupId });
-    return { success: true };
+    groupedId = await chrome.tabs.group({ tabIds: [...tabIds], groupId });
+    return { success: true, groupId: groupedId };
   } catch (e) {
     console.warn("Couldn't group tabs", e);
     return { success: false, reason: (e as Error).message };

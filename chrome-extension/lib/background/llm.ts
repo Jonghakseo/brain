@@ -42,10 +42,12 @@ export class LLM {
       throw new Error('Program has no steps');
     }
 
-    const recordPrompt = program.__records?.isUseful
-      ? `This is previous record. It's useful for you. Please check it.\nBut, It just a old record. You should do it new.\n
-      \n${JSON.stringify(program.__records.history, null, 1)}`
-      : '';
+    // FIXME: temporary disabled record prompt
+    const recordPrompt = '';
+    // const recordPrompt = program.__records?.isUseful
+    //   ? `This is previous record. It's useful for you. Please check it.\nBut, It just a old record. You should do it new.\n
+    //   \n${JSON.stringify(program.__records.history, null, 1)}`
+    //   : '';
 
     const initialPrompt = `You're a Chrome browser automation extension.
     Look at this json structure, and let's try do it. Step by step.
@@ -53,15 +55,14 @@ export class LLM {
     \`\`\`json
     ${JSON.stringify(program.steps, null, 2)}
     \`\`\`
-    
     ${recordPrompt}
     `;
 
     this.llm.config = {
       ...llmConfig,
       maxTokens: 4000,
-      topP: 0.5,
-      temperature: 0.5,
+      topP: 0.2,
+      temperature: 0.2,
       systemPrompt: "You're a Chrome browser automation extension.",
     };
     this.extensionConfig = {
@@ -76,20 +77,26 @@ export class LLM {
     const throttledUpdateAIChat = getThrottledUpdateAIChat();
 
     const createChat = async (chat: Chat, toolNames: string[]) => {
+      this.llm.useAnyCall = false; // prevent any call
+      this.llm.tools = ALL_TOOLS.filter(tool => toolNames.includes(tool.function?.name ?? 'NONE'));
       const createdAt = await conversationStorage.startAIChat();
       history.push(this.convertChatToOpenAIFormat(chat));
       const useLowModel = await this.determineUseLowModel(history);
-      this.llm.model = useLowModel ? 'gpt-3.5-turbo' : 'gpt-4o';
-      this.llm.useAnyCall = false; // prevent any call
-      this.llm.tools = ALL_TOOLS.filter(tool => toolNames.includes(tool.function?.name ?? 'NONE'));
+      const hasMutation = this.llm.tools.some(tool => {
+        const properties = tool.function?.parameters?.properties;
+        return Object.keys(properties ?? {}).length > 0;
+      });
+      this.llm.model = useLowModel && !hasMutation ? 'gpt-3.5-turbo' : 'gpt-4o';
       this.llm.log('STEPS TOOL', this.llm.tools);
       let functionName: string | null = null;
+      let functionNameRaw: string | null = null;
       const response = await this.llm.createChatCompletionStreamWithTools({
         messages: history,
         onFunctionCall: functionCall => {
           if (!functionCall?.name || functionCall.name === anyCall.function.name) {
             return;
           }
+          functionNameRaw = functionCall.name;
           functionName = camelCaseToSentence(functionCall.name);
           throttledUpdateAIChat(createdAt, `${functionName} ${LOADING_PLACEHOLDER}`);
           if (
@@ -100,11 +107,17 @@ export class LLM {
           }
         },
         onFunctionCallResult: functionCallResult => {
-          history.push(this.convertChatToOpenAIFormat(makeAssistantChat({ text: functionCallResult })));
+          if (functionNameRaw) {
+            history.push({
+              role: 'function',
+              name: functionNameRaw,
+              content: functionCallResult,
+            });
+          }
         },
       });
       const responseText = response.choices.at(0)?.message.content ?? 'NONE';
-      history.push(this.convertChatToOpenAIFormat(makeAssistantChat({ text: responseText })));
+      history.push(this.convertChatToOpenAIFormat(makeAssistantChat({ text: `DONE` })));
       await this.flushScheduledMessageContent(async chat => {
         await createChat(chat, toolNames);
       });
