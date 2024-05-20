@@ -129,7 +129,7 @@ export class LLM {
     function* keepAsking() {
       const stepsForProgram = program.steps.map((step, index) => {
         const stepIndex = index + 1;
-        const toolText = step.tools.length > 0 ? `You can use ${step.tools.join(', ')} tools. ` : '';
+        const toolText = (step.tools?.length ?? 0) > 0 ? `You can use ${step.tools?.join(', ')} tools. ` : '';
         return {
           stepIndex,
           tools: step.tools,
@@ -143,7 +143,7 @@ export class LLM {
         if (!step) {
           break;
         }
-        const response = createChat(makeUserChat({ text: step.prompt }), step.tools);
+        const response = createChat(makeUserChat({ text: step.prompt }), step.tools ?? []);
         yield { response, step };
       }
     }
@@ -169,6 +169,7 @@ export class LLM {
           lastMessage.createdAt,
           lastMessage.text + '\n\n' + SAVE_PLACEHOLDER + programId + '\n',
         );
+        await conversationStorage.removeAllPlaceholder('loading', DONE_PLACEHOLDER);
       }
     }
     return history;
@@ -247,7 +248,6 @@ export class LLM {
       },
     });
     messages.push(this.convertChatToOpenAIFormat(makeAssistantChat({ text })));
-
     return {
       messages,
       createdAt,
@@ -255,7 +255,7 @@ export class LLM {
   }
 
   private convertChatToOpenAIFormat(chat: Chat): ChatCompletionAssistantMessageParam | ChatCompletionUserMessageParam {
-    const detail = this.extensionConfig?.detailAnalyzeImage ? 'auto' : 'low';
+    const detail = this.extensionConfig?.detailAnalyzeImage ? 'high' : 'auto';
     if (chat.type === 'user') {
       const content: ChatCompletionUserMessageParam['content'] = [];
       if (chat.content.text) {

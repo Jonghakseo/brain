@@ -20,7 +20,7 @@ type ConversationStorage = BaseStorage<Conversation> & {
   getLastAIChat: () => Promise<Chat | undefined>;
   deleteChat: (createdAt: number) => Promise<void>;
   reset: () => Promise<void>;
-  removeAllPlaceholder: (type: 'loading') => Promise<void>;
+  removeAllPlaceholder: (type: 'loading', to?: string) => Promise<void>;
 };
 
 const storage = createStorage<Conversation>(
@@ -103,13 +103,13 @@ export const conversationStorage: ConversationStorage = {
       .pop();
     return lastAIChat;
   },
-  removeAllPlaceholder: async type => {
+  removeAllPlaceholder: async (type, to = '') => {
     if (type === 'loading') {
       await storage.set(prev => ({
         ...prev,
         chats: prev.chats?.map(chat => {
           if (chat.content.text?.includes(LOADING_PLACEHOLDER)) {
-            return { ...chat, content: { text: chat.content.text.replace(LOADING_PLACEHOLDER, '') } };
+            return { ...chat, content: { text: chat.content.text.replace(LOADING_PLACEHOLDER, to) } };
           }
           return chat;
         }),
