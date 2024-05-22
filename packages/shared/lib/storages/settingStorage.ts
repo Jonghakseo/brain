@@ -16,6 +16,7 @@ type Setting = {
     forgetChatAfter: number;
     visibleChatAfterLine: boolean;
     useLatestImage: boolean;
+    useDictionaryReplace: boolean;
   };
 };
 
@@ -49,6 +50,8 @@ const storage = createStorage<Setting>(
       detailAnalyzeImage: true,
       useLatestImage: true,
       visibleChatAfterLine: true,
+      /**@deprecated */
+      useDictionaryReplace: true,
       captureQuality: 25,
       forgetChatAfter: 10,
     },

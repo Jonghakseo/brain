@@ -16,10 +16,6 @@ export type Program = {
   name: string;
   steps: Array<{ id: string | number; tools?: string[]; whatToDo: string }>;
   isPinned: boolean;
-  /** @deprecated */
-  useRecord?: boolean;
-  /** @deprecated */
-  __records?: unknown;
 };
 
 type ProgramStorage = BaseStorage<Store> & {
@@ -92,7 +88,7 @@ export const programStorage: ProgramStorage = {
       return {
         ...currentStore,
         programs: currentStore.programs.map(({ name, id, isPinned, steps }, i) =>
-          i === index ? { name, id, isPinned, steps, ...program, __records: {} } : { name, id, isPinned, steps },
+          i === index ? { name, id, isPinned, steps, ...program } : { name, id, isPinned, steps },
         ),
       };
     });

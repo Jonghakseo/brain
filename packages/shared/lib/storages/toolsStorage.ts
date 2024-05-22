@@ -33,7 +33,7 @@ export const toolsStorage: ToolsStorage = {
       // openai RunnableToolFunction
       ...maybeZodFunction.function,
       category: maybeZodFunction.category,
-      isActivated: true,
+      isActivated: false,
     }));
     await storage.set(prev => {
       if (!prev) {

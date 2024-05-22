@@ -38,7 +38,7 @@ function ChatSendArea({ onSend, loading }: ChatSendAreaProps) {
     if (e.nativeEvent.isComposing) {
       return;
     }
-    if (!e.metaKey && e.key === 'Enter') {
+    if (!e.metaKey && !e.shiftKey && e.key === 'Enter') {
       formRef.current?.requestSubmit();
       e.preventDefault();
     }

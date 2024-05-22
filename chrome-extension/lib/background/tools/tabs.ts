@@ -5,8 +5,8 @@ const TabInfo = z.object({
   id: z.number().optional(),
   url: z.string().optional(),
   title: z.string().optional(),
-  width: z.number().optional(),
-  height: z.number().optional(),
+  // width: z.number().optional(),
+  // height: z.number().optional(),
   groupId: z.number().optional(),
   lastAccessed: z.number().optional(),
 });
@@ -16,8 +16,8 @@ function convertTabToTabInfo({
   url,
   groupId,
   title,
-  width,
-  height,
+  // width,
+  // height,
   lastAccessed,
 }: chrome.tabs.Tab): z.infer<typeof TabInfo> {
   return {
@@ -25,8 +25,8 @@ function convertTabToTabInfo({
     url,
     groupId: groupId === -1 ? undefined : groupId,
     title,
-    width,
-    height,
+    // width,
+    // height,
     lastAccessed,
   };
 }

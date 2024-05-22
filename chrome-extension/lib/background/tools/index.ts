@@ -7,4 +7,5 @@ export * from './screen';
 export * from './search';
 export * from './dom';
 export * from './program';
+export * from './memory';
 export * from './etc';

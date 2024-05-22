@@ -35,7 +35,7 @@ export class LLM {
     this.llm = llm;
   }
 
-  async runProgram(programId: string) {
+  public async runProgram(programId: string) {
     const { llmConfig, extensionConfig } = await settingStorage.get();
     const program = await programStorage.getProgram(programId);
     if (program.steps.length === 0) {
@@ -133,9 +133,7 @@ export class LLM {
         return {
           stepIndex,
           tools: step.tools,
-          prompt: `This is step #${stepIndex}. ${toolText} for ${step.whatToDo}.
-          Your answer will be used by next step. so, please write it with detail information.
-          `,
+          prompt: `This is step #${stepIndex}. ${toolText} for ${step.whatToDo}. do right thing. and answer me DONE.`,
         };
       });
       while (stepsForProgram.length > 0) {
@@ -163,7 +161,7 @@ export class LLM {
         }
       }
     } finally {
-      await programStorage.updateProgram(programId, { __records: { createdAt: Date.now(), history } });
+      // await programStorage.updateProgram(programId, { __records: { createdAt: Date.now(), history } });
       if (lastMessage.createdAt !== -1) {
         await conversationStorage.updateAIChat(
           lastMessage.createdAt,
@@ -175,7 +173,7 @@ export class LLM {
     return history;
   }
 
-  async chatCompletionWithHistory(chatContent: Chat['content'], history: Chat[]) {
+  public async chatCompletionWithHistory(chatContent: Chat['content'], history: Chat[]) {
     const { llmConfig, extensionConfig } = await settingStorage.get();
     this.llm.config = llmConfig;
     this.extensionConfig = extensionConfig;

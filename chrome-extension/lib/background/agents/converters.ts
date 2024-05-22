@@ -25,6 +25,28 @@ export function replaceImageMessages(
   });
 }
 
+export function replaceUserChatTextMessage(messages: ChatCompletionMessageParam[], replace: (prev: string) => string) {
+  return messages.map(message => {
+    if (message.role === 'user') {
+      return {
+        ...message,
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-ignore
+        content: (message as ChatCompletionUserMessageParam).content.map(content => {
+          if (content.type === 'image_url') {
+            return content;
+          }
+          return {
+            type: 'text',
+            text: replace(content.text),
+          };
+        }),
+      };
+    }
+    return message;
+  });
+}
+
 export function splitArrayByIndex<T>(array: T[], index: number) {
   return [array.slice(0, index), array.slice(index)] as const;
 }

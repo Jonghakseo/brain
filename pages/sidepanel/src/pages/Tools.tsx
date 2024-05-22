@@ -36,7 +36,7 @@ export default function Tools() {
                 </Typography>
                 <Switch
                   label="Toggle All"
-                  checked={tools.every(tool => tool.isActivated)}
+                  defaultChecked={tools.every(tool => tool.isActivated)}
                   onChange={event => toolsStorage.toggleAllByCategory(category, event.target.checked)}
                 />
               </div>
@@ -60,7 +60,11 @@ export default function Tools() {
                             {tool.description}
                           </Typography>
                         }>
-                        <Switch label={<label className="capitalize">{tool.name}</label>} checked={tool.isActivated} />
+                        <Switch
+                          label={<label className="capitalize">{tool.name}</label>}
+                          checked={tool.isActivated}
+                          onChange={() => {}}
+                        />
                       </PopoverWithHover>
                     </div>
                   );
