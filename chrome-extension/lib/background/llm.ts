@@ -1,6 +1,7 @@
 import {
   calculateImageFileSize,
   type Chat,
+  type ExtensionConfig,
   conversationStorage,
   DONE_PLACEHOLDER,
   LOADING_PLACEHOLDER,
@@ -18,7 +19,6 @@ import { Screen } from '@lib/background/program/Screen';
 import { ToolSelector } from '@lib/background/agents/toolSelector';
 import { BaseLLM } from '@lib/background/agents/base';
 import { replaceImageMessages, splitArrayByIndex } from '@lib/background/agents/converters';
-import { ExtensionConfig } from '@chrome-extension-boilerplate/shared/dist/lib/storages/settingStorage';
 import { ALL_TOOLS, anyCall, toolManagingTools } from '@lib/background/tool';
 
 const camelCaseToSentence = (camelCase: string) => {

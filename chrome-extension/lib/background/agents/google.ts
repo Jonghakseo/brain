@@ -62,8 +62,7 @@ export class GoogleLLM implements BaseLLM {
     const { temperature, maxTokens, topP, systemPrompt } = this.config;
 
     this.client = this.sdk.getGenerativeModel({
-      // model: 'gemini-1.5-flash',
-      model: 'models/gemini-1.5-pro-latest',
+      model: 'gemini-1.5-flash',
       generationConfig: {
         temperature,
         topP,
