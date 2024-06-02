@@ -24,8 +24,6 @@ jobs:
           key: ${{ runner.OS }}-build-${{ hashFiles('**/pnpm-lock.yaml') }}
 
       - uses: pnpm/action-setup@v3
-        with:
-          version: 9
 
       - run: pnpm install --frozen-lockfile
 
