@@ -11,6 +11,10 @@ export interface CaptureMessage extends BaseMessage {
   response: string;
 }
 
+export interface AbortMessage extends BaseMessage {
+  type: 'Abort';
+}
+
 export interface ChatMessage extends BaseMessage {
   type: 'Chat';
   payload: {
@@ -35,7 +39,7 @@ export interface RunProgramMessage extends BaseMessage {
   response: unknown;
 }
 
-export type Message = CaptureMessage | ChatMessage | RunProgramMessage;
+export type Message = CaptureMessage | ChatMessage | RunProgramMessage | AbortMessage;
 
 export interface PartyEffectMessage extends BaseMessage {
   type: 'partyEffect'; // only celebrate

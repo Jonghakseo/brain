@@ -1,12 +1,13 @@
 import {
   calculateImageFileSize,
   Chat,
+  conversationStorage,
   sendToBackground,
   settingStorage,
   useStorage,
 } from '@chrome-extension-boilerplate/shared';
 import { memo, useEffect, useRef, useState } from 'react';
-import { IconButton, Spinner, Textarea } from '@material-tailwind/react';
+import { Button, IconButton, Spinner, Textarea } from '@material-tailwind/react';
 import PopoverWithHover from '@src/components/PopoverWithHover';
 
 type ChatSendAreaProps = {
@@ -98,6 +99,14 @@ function ChatSendArea({ onSend, loading }: ChatSendAreaProps) {
     }
   };
 
+  const abortChat = async () => {
+    try {
+      await sendToBackground('Abort');
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
   return (
     <form
       ref={formRef}
@@ -108,7 +117,23 @@ function ChatSendArea({ onSend, loading }: ChatSendAreaProps) {
         }
         void sendMessage();
       }}
-      className="flex w-full flex-row items-center gap-2 rounded-[24px] border border-gray-900/10 bg-gray-900/5 p-2">
+      className="flex w-full flex-row items-center gap-2 rounded-[24px] border border-gray-900/10 bg-gray-900/5 p-2 relative">
+      {/*<Button*/}
+      {/*  size="sm"*/}
+      {/*  variant="gradient"*/}
+      {/*  color="red"*/}
+      {/*  className="top-[-12px] z-10 flex items-center gap-3 !absolute left-[50%] transform translate-x-[-50%]"*/}
+      {/*  onClick={abortChat}>*/}
+      {/*  <svg*/}
+      {/*    xmlns="http://www.w3.org/2000/svg"*/}
+      {/*    fill="none"*/}
+      {/*    viewBox="0 0 24 24"*/}
+      {/*    strokeWidth={2}*/}
+      {/*    stroke="currentColor"*/}
+      {/*    className="h-4 w-4">*/}
+      {/*    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />*/}
+      {/*  </svg>*/}
+      {/*</Button>*/}
       <div className="flex flex-col">
         <PopoverWithHover
           contentClassName="!left-2"

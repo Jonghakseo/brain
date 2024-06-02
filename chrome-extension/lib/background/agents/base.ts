@@ -12,6 +12,7 @@ export abstract class BaseLLM {
   toolChoice: 'required' | 'auto' | 'none' = 'auto';
   isJson: boolean = false;
   useAnyCall: boolean = true;
+  abstract abortController: AbortController;
 
   abstract saveUsage(usage: unknown): Promise<void>;
 

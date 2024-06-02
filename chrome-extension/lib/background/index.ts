@@ -1,14 +1,17 @@
 // eslint-disable-next-line @typescript-eslint/triple-slash-reference
 import 'webextension-polyfill';
-import type { Message } from '@chrome-extension-boilerplate/shared';
+import { Message, settingStorage } from '@chrome-extension-boilerplate/shared';
 import { LLM } from '@lib/background/llm';
 import { Screen } from '@lib/background/program/Screen';
 import { OpenAILLM } from '@lib/background/agents/openai';
+import { GoogleLLM } from '@lib/background/agents/google';
 
 /**
  * when click the extension icon, open(or close) the side panel automatically
  */
 void chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true });
+
+let abortController: AbortController | undefined;
 
 chrome.runtime.onConnect.addListener(port => {
   const sendResponse = <M extends Message>(message: Omit<M, 'payload'>) => {
@@ -24,6 +27,11 @@ chrome.runtime.onConnect.addListener(port => {
 
   port.onMessage.addListener(async (message: Message) => {
     console.log('message', message);
+    const {
+      llmConfig: { model },
+    } = await settingStorage.get();
+    const baseLLM = model === 'gemini-1.5-flash' ? new GoogleLLM(model) : new OpenAILLM(model);
+    abortController = baseLLM.abortController;
     try {
       switch (message.type) {
         case 'ScreenCapture': {
@@ -32,7 +40,6 @@ chrome.runtime.onConnect.addListener(port => {
           break;
         }
         case 'Chat': {
-          const baseLLM = new OpenAILLM();
           const llm = new LLM(baseLLM);
           const { messages } = await llm.chatCompletionWithHistory(
             message.payload.content,
@@ -49,10 +56,15 @@ chrome.runtime.onConnect.addListener(port => {
         //   break;
         // }
         case 'RunProgram': {
-          const baseLLM = new OpenAILLM();
           const llm = new LLM(baseLLM);
           const program = await llm.runProgram(message.payload.programId);
           sendResponse({ type: 'RunProgram', response: program });
+          break;
+        }
+        case 'Abort': {
+          console.log('Abort', !!abortController);
+          abortController?.abort();
+          sendResponse({ type: 'Abort', response: 'Aborted' });
           break;
         }
       }

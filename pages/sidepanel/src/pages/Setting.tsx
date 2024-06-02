@@ -1,5 +1,5 @@
 import Layout from '@src/components/Layout';
-import { Input, Switch, Textarea, Typography } from '@material-tailwind/react';
+import { Input, Select, Switch, Textarea, Typography, Option } from '@material-tailwind/react';
 import { settingStorage, useStorage } from '@chrome-extension-boilerplate/shared';
 
 export default function Setting() {
@@ -32,6 +32,16 @@ export default function Setting() {
               settingStorage.updateLLMConfig('temperature', e.target.valueAsNumber);
             }}
           />
+          <Select
+            label="Core Model"
+            value={llmConfig.model}
+            onChange={value => {
+              settingStorage.updateLLMConfig('model', value as 'gpt-4o' | 'gpt-3.5-turbo' | 'gemini-1.5-flash');
+            }}>
+            <Option value="gpt-4o">GPT-4o</Option>
+            <Option value="gpt-3.5-turbo">GPT-3.5 turbo</Option>
+            <Option value="gemini-1.5-flash">Gemini 1.5 flash</Option>
+          </Select>
           <Input
             label="Top P"
             step={0.1}
@@ -120,7 +130,7 @@ export default function Setting() {
             }}
           />
           <Switch
-            label="Auto Switch GPT3.5 Turbo (detault: GPT4o)"
+            label="Auto Switch GPT3.5 Turbo (detault: Core Model)"
             defaultChecked={extensionConfig.autoSelectModel}
             onChange={e => {
               settingStorage.updateExtensionConfig('autoSelectModel', e.currentTarget.checked);

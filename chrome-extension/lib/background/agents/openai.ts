@@ -12,19 +12,21 @@ import { ChatCompletionRunner } from 'openai/lib/ChatCompletionRunner';
 import { BaseLLM } from '@lib/background/agents/base';
 import { anyCall } from '@lib/background/tool';
 
+type Model = Extract<ChatModel, 'gpt-4o' | 'gpt-3.5-turbo'>;
 export class OpenAILLM implements BaseLLM {
   name: string = 'OpenAILLM';
   client: OpenAI;
-  model: Extract<ChatModel, 'gpt-4o' | 'gpt-3.5-turbo'>;
+  model: Model;
   config: LLMConfig | null = null;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   tools: RunnableTools<any[]> = [];
   toolChoice: 'required' | 'auto' | 'none' = 'auto';
   isJson = false;
   useAnyCall = true;
+  abortController = new AbortController();
 
-  constructor() {
-    this.model = 'gpt-4o';
+  constructor(model: Model) {
+    this.model = model;
     const apiKey = process.env.OPENAI_KEY as string;
     this.client = new OpenAI({ apiKey });
   }
@@ -78,17 +80,20 @@ export class OpenAILLM implements BaseLLM {
 
     const systemMessage: ChatCompletionSystemMessageParam = this.makeSystemMessage(systemPrompt);
     try {
-      const result = await this.client.chat.completions.create({
-        model: this.model,
-        messages: [systemMessage, ...messages],
-        n,
-        temperature,
-        max_tokens: maxTokens,
-        top_p: topP,
-        response_format: {
-          type: this.isJson ? 'json_object' : 'text',
+      const result = await this.client.chat.completions.create(
+        {
+          model: this.model,
+          messages: [systemMessage, ...messages],
+          n,
+          temperature,
+          max_tokens: maxTokens,
+          top_p: topP,
+          response_format: {
+            type: this.isJson ? 'json_object' : 'text',
+          },
         },
-      });
+        { signal: this.abortController.signal },
+      );
 
       if (result.usage) {
         await this.saveUsage(result.usage);
@@ -139,18 +144,21 @@ export class OpenAILLM implements BaseLLM {
     const { systemPrompt, topP, temperature, maxTokens } = this.config;
     const systemMessage: ChatCompletionSystemMessageParam = this.makeSystemMessage(systemPrompt);
 
-    const runner = this.client.beta.chat.completions.runTools({
-      model: this.model,
-      messages: [systemMessage, ...messages],
-      temperature,
-      max_tokens: maxTokens,
-      top_p: topP,
-      tools: this.useAnyCall ? this.tools.concat(anyCall) : this.tools,
-      tool_choice: this.toolChoice,
-      response_format: {
-        type: this.isJson ? 'json_object' : 'text',
+    const runner = this.client.beta.chat.completions.runTools(
+      {
+        model: this.model,
+        messages: [systemMessage, ...messages],
+        temperature,
+        max_tokens: maxTokens,
+        top_p: topP,
+        tools: this.useAnyCall ? this.tools.concat(anyCall) : this.tools,
+        tool_choice: this.toolChoice,
+        response_format: {
+          type: this.isJson ? 'json_object' : 'text',
+        },
       },
-    });
+      { signal: this.abortController.signal },
+    );
     runner
       .on('connect', () => {
         this.log('connected');

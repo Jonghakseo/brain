@@ -18,7 +18,7 @@ import { splitArrayByIndex } from '@lib/background/agents/converters';
 
 export class GoogleLLM implements BaseLLM {
   name = 'GoogleLLM';
-  model: string | undefined;
+  model: 'gemini-1.5-flash';
   sdk: GoogleGenerativeAI;
   config: LLMConfig | null = null;
   client: GenerativeModel | null = null;
@@ -27,8 +27,10 @@ export class GoogleLLM implements BaseLLM {
   toolChoice: 'required' | 'auto' = 'required';
   isJson = false;
   useAnyCall = false;
+  abortController = new AbortController();
 
-  constructor() {
+  constructor(model: 'gemini-1.5-flash') {
+    this.model = model;
     this.sdk = new GoogleGenerativeAI(String(process.env.GOOGLEAI_KEY));
   }
   log(...args: Parameters<typeof console.log>) {
@@ -42,7 +44,7 @@ export class GoogleLLM implements BaseLLM {
   async createChatCompletionStreamWithTools({
     messages,
     onMessage,
-    onContent,
+    onContent: _onContent,
     onError,
     onConnect,
     onFunctionCall,
@@ -59,10 +61,18 @@ export class GoogleLLM implements BaseLLM {
     if (!this.config) {
       throw new Error('config is not set');
     }
+
+    const onContent = (delta: string) => {
+      if (this.abortController.signal.aborted) {
+        throw new Error('aborted');
+      }
+      _onContent?.(delta);
+    };
+
     const { temperature, maxTokens, topP, systemPrompt } = this.config;
 
     this.client = this.sdk.getGenerativeModel({
-      model: 'gemini-1.5-flash',
+      model: this.model,
       generationConfig: {
         temperature,
         topP,
