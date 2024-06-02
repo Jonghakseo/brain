@@ -1,12 +1,21 @@
 import { useState } from 'react';
-import { Popover, PopoverContent, PopoverHandler } from '@material-tailwind/react';
+import { Popover, PopoverContent, PopoverHandler, PopoverProps } from '@material-tailwind/react';
 
 type PopoverWithHoverProps = {
   children: React.ReactNode;
   content: React.ReactNode;
+  contentClassName?: string;
+  placement?: PopoverProps['placement'];
+  disabled?: boolean;
 };
 
-export default function PopoverWithHover({ children, content }: PopoverWithHoverProps) {
+export default function PopoverWithHover({
+  children,
+  content,
+  placement,
+  disabled,
+  contentClassName,
+}: PopoverWithHoverProps) {
   const [open, setOpen] = useState(false);
 
   const triggers = {
@@ -14,12 +23,16 @@ export default function PopoverWithHover({ children, content }: PopoverWithHover
     onMouseLeave: () => setOpen(false),
   };
 
+  if (disabled) {
+    return <>{children}</>;
+  }
+
   return (
-    <Popover open={open} handler={setOpen}>
+    <Popover open={open} handler={setOpen} placement={placement}>
       <PopoverHandler>
         <div {...triggers}>{children}</div>
       </PopoverHandler>
-      <PopoverContent className="z-50">{content}</PopoverContent>
+      <PopoverContent className={`z-50 ${contentClassName}`}>{content}</PopoverContent>
     </Popover>
   );
 }

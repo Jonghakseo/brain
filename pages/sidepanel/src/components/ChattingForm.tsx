@@ -52,7 +52,7 @@ function ChattingForm({ chats, sendChat }: ChattingFormProps) {
             <Fragment key={chat.createdAt}>
               {showForgetGuideLine && <ForgetGuideline forgetChatAfter={forgetChatAfter} />}
               <li className="flex flex-row gap-4 items-start">
-                {!isUser && <ChatProfile type="ai" />}
+                {!isUser && <ChatProfile type="ai" createdAt={chat.createdAt} />}
                 <Card className={'w-auto max-w-[90%]' + (isUser ? ' ml-auto' : '')}>
                   <CardBody className="p-4 text-pretty">
                     <ChatBox createdAt={chat.createdAt} text={chat.content.text} image={chat.content.image} />
