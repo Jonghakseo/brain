@@ -173,7 +173,7 @@ export const domTools = [
   zodFunction({
     function: clickElementBySelector,
     schema: ClickElementBySelectorParams,
-    description: 'Click on interactive element by selector.',
+    description: 'Click on interactive element by selector or Full XPath.',
   }),
   // zodFunction({
   //   function: getInteractiveElementsNearbyPoint,

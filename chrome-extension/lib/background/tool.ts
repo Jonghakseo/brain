@@ -23,10 +23,10 @@ const ALL_TOOLS_WITH_CATEGORY = [
   ...addCategoryIntoTools(settingTools)('Config'),
   ...addCategoryIntoTools(urlTools)('History & Bookmark'),
   ...addCategoryIntoTools(tabsTools)('Tab Manage & Navigation'),
-  ...addCategoryIntoTools(screenTools)('Search & Screen Capture'),
-  ...addCategoryIntoTools(searchTools)('Search & Screen Capture'),
+  ...addCategoryIntoTools(screenTools)('Screen Capture'),
+  // ...addCategoryIntoTools(searchTools)('???'),
   ...addCategoryIntoTools(programTools)('Programs & Macros'),
-  ...addCategoryIntoTools(memoryTools)('Memory'),
+  // ...addCategoryIntoTools(memoryTools)('Memory'),
   ...addCategoryIntoTools(etcTools)('ETC tools'),
   ...addCategoryIntoTools(billingTools)('OpenAI Usage'),
   ...addCategoryIntoTools(domTools)('Dom Action'),
@@ -39,12 +39,12 @@ export const ALL_TOOLS = [
   ...urlTools,
   ...tabsTools,
   ...screenTools,
-  ...searchTools,
+  // ...searchTools,
   ...programTools,
   ...etcTools,
   ...billingTools,
   ...domTools,
-  ...memoryTools,
+  // ...memoryTools,
 ];
 
 chrome.runtime.onInstalled.addListener(() => {
