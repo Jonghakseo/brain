@@ -1,8 +1,9 @@
 import { z } from 'zod';
 import { zodFunction } from './zodFunction';
-import { programStorage } from '@chrome-extension-boilerplate/shared';
+import { programStorage, settingStorage } from '@chrome-extension-boilerplate/shared';
 import { OpenAILLM } from '@lib/background/agents/openai';
 import { LLM } from '@lib/background/llm';
+import { GoogleLLM } from '@lib/background/agents/google';
 
 async function getUserMadeMacroPrograms() {
   const { programs } = await programStorage.get();
@@ -15,7 +16,9 @@ const RunProgramParams = z.object({
 
 async function runProgram(params: z.infer<typeof RunProgramParams>) {
   try {
-    const baseLLM = new OpenAILLM();
+    const { llmConfig } = await settingStorage.get();
+    const baseLLM =
+      llmConfig.model === 'gemini-1.5-flash' ? new GoogleLLM(llmConfig.model) : new OpenAILLM(llmConfig.model);
     const llm = new LLM(baseLLM);
     void llm.runProgram(params.programId);
     return { success: true, message: 'Program is running' };
