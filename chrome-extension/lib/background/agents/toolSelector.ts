@@ -7,12 +7,12 @@ export class ToolSelector extends OpenAILLM {
   name = 'ToolSelector';
 
   constructor() {
-    super();
+    super('gpt-3.5-turbo');
     this.toolChoice = 'required';
-    this.model = 'gpt-3.5-turbo';
     // this.model = 'gpt-4o';
     this.isJson = true;
     this.config = {
+      model: 'gpt-4o',
       temperature: 1.9,
       topP: 1,
       maxTokens: 4000,

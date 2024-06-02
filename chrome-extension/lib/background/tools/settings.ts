@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { zodFunction } from './zodFunction';
-import { settingStorage, toolsStorage } from '@chrome-extension-boilerplate/shared';
+import { settingStorage } from '@chrome-extension-boilerplate/shared';
 
 async function getAIConfig() {
   const { llmConfig } = await settingStorage.get();
