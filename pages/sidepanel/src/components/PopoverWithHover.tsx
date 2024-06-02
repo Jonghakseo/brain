@@ -32,7 +32,7 @@ export default function PopoverWithHover({
       <PopoverHandler>
         <div {...triggers}>{children}</div>
       </PopoverHandler>
-      <PopoverContent className={`z-50 ${contentClassName}`}>{content}</PopoverContent>
+      <PopoverContent className={`z-50 py-1 px-2 ${contentClassName}`}>{content}</PopoverContent>
     </Popover>
   );
 }

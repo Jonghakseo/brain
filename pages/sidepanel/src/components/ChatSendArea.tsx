@@ -1,12 +1,13 @@
 import {
+  calculateImageFileSize,
   Chat,
   sendToBackground,
   settingStorage,
   useStorage,
-  calculateImageFileSize,
 } from '@chrome-extension-boilerplate/shared';
-import { memo, ReactNode, useRef, useState } from 'react';
-import { IconButton, Popover, PopoverContent, PopoverHandler, Spinner, Textarea } from '@material-tailwind/react';
+import { memo, useEffect, useRef, useState } from 'react';
+import { IconButton, Spinner, Textarea } from '@material-tailwind/react';
+import PopoverWithHover from '@src/components/PopoverWithHover';
 
 type ChatSendAreaProps = {
   loading: boolean;
@@ -15,14 +16,31 @@ type ChatSendAreaProps = {
 
 function ChatSendArea({ onSend, loading }: ChatSendAreaProps) {
   const formRef = useRef<HTMLFormElement>(null);
+  const imageRef = useRef<HTMLInputElement>(null);
   const loadingRef = useRef(false);
   const [imageUrl, setImageUrl] = useState<string | undefined>(undefined);
   const [text, setText] = useState('');
   const { extensionConfig } = useStorage(settingStorage);
   const { autoCapture } = extensionConfig;
 
+  useEffect(() => {
+    if (!autoCapture) {
+      return;
+    }
+
+    const id = setInterval(async () => {
+      if (!loading) {
+        const base64 = await sendToBackground('ScreenCapture');
+        setImageUrl(base64);
+      }
+    }, 500);
+
+    return () => clearInterval(id);
+  }, [autoCapture]);
+
   const resetImage = () => {
     setImageUrl(undefined);
+    imageRef.current!.value = '';
   };
 
   const onChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -30,8 +48,23 @@ function ChatSendArea({ onSend, loading }: ChatSendAreaProps) {
   };
 
   const captureScreen = async () => {
+    if (autoCapture) {
+      return;
+    }
     const base64 = await sendToBackground('ScreenCapture');
     setImageUrl(base64);
+  };
+
+  const onChangeImageInput = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const base64 = await new Promise<string | undefined>(resolve => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result as string);
+        reader.readAsDataURL(file);
+      });
+      setImageUrl(base64);
+    }
   };
 
   const onKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -77,7 +110,9 @@ function ChatSendArea({ onSend, loading }: ChatSendAreaProps) {
       }}
       className="flex w-full flex-row items-center gap-2 rounded-[24px] border border-gray-900/10 bg-gray-900/5 p-2">
       <div className="flex flex-col">
-        <WithPopover enabled={autoCapture} content={<div className="p-2 text-sm">Auto Capture is enabled</div>}>
+        <PopoverWithHover
+          contentClassName="!left-2"
+          content={<div className="p-1 text-sm">{autoCapture ? 'Auto Capture is enabled' : 'Capture screen'}</div>}>
           <IconButton variant="text" className="rounded-full" onClick={captureScreen}>
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -93,27 +128,56 @@ function ChatSendArea({ onSend, loading }: ChatSendAreaProps) {
               />
             </svg>
           </IconButton>
-        </WithPopover>
-        {imageUrl && (
-          <IconButton onClick={resetImage} variant="text" className="rounded-full flex items-center content-center">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              className="h-5 w-5">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </IconButton>
+        </PopoverWithHover>
+        {autoCapture || (
+          <PopoverWithHover contentClassName="!left-2" content={<div className="p-1 text-sm">Upload Image</div>}>
+            <input type="file" accept="image/*" className="hidden" ref={imageRef} onChange={onChangeImageInput} />
+            <IconButton
+              variant="text"
+              className="rounded-full"
+              onClick={async () => {
+                imageRef.current?.click();
+              }}>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                strokeWidth={2}
+                stroke="currentColor"
+                className="h-5 w-5">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M9 8.25H7.5a2.25 2.25 0 0 0-2.25 2.25v9a2.25 2.25 0 0 0 2.25 2.25h9a2.25 2.25 0 0 0 2.25-2.25v-9a2.25 2.25 0 0 0-2.25-2.25H15m0-3-3-3m0 0-3 3m3-3V15"
+                />
+              </svg>
+            </IconButton>
+          </PopoverWithHover>
         )}
       </div>
       {imageUrl && (
         <div className="rounded-md relative flex shrink-0 items-center">
           <img src={imageUrl} className="h-12 w-fit rounded-md" alt="screen capture" />
+          {autoCapture || (
+            <IconButton
+              onClick={resetImage}
+              variant="text"
+              size="sm"
+              className="rounded-full flex items-center content-center !absolute left-[50%] transform translate-x-[-50%] !bg-white !bg-opacity-60">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                className="h-3 w-3">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </IconButton>
+          )}
         </div>
       )}
       <Textarea
-        rows={1}
+        rows={2}
         resize={false}
         onChange={onChange}
         onKeyDown={onKeyDown}
@@ -149,24 +213,6 @@ function ChatSendArea({ onSend, loading }: ChatSendAreaProps) {
 }
 
 export default memo(ChatSendArea);
-
-type WithPopoverProps = {
-  enabled: boolean;
-  content: ReactNode;
-  children: ReactNode;
-};
-
-function WithPopover({ enabled, children, content }: WithPopoverProps) {
-  if (!enabled) {
-    return <>{children}</>;
-  }
-  return (
-    <Popover>
-      <PopoverHandler>{children}</PopoverHandler>
-      <PopoverContent className="p-1 !left-2">{content}</PopoverContent>
-    </Popover>
-  );
-}
 
 const calculateImageSize = (base64Image: string) => {
   return new Promise<{ width: number; height: number }>((resolve, reject) => {

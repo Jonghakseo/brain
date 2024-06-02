@@ -20,11 +20,7 @@ export default function ChatProfile({ type, createdAt }: ChatProfileProps) {
 
   //todo copy, delete, edit
   return (
-    <PopoverWithHover
-      content="You can copy on click!"
-      contentClassName="py-1 px-2"
-      placement="bottom-end"
-      disabled={!isAi}>
+    <PopoverWithHover content="You can copy on click!" placement="bottom-end" disabled={!isAi}>
       <Avatar
         className={`shrink-0 mt-2 ${createdAt ? 'cursor-pointer' : ''}`}
         size="sm"
