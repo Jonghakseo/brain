@@ -122,6 +122,9 @@ async function tabGroup(params: z.infer<typeof TabGroupParams>) {
     groupedId = await chrome.tabs.group({ tabIds: [...tabIds], groupId });
     return { success: true, groupId: groupedId };
   } catch (e) {
+    if ((e as Error).message.startsWith('No group with id')) {
+      return tabGroup({ ...params, groupId: undefined });
+    }
     console.warn("Couldn't group tabs", e);
     return { success: false, reason: (e as Error).message };
   }
