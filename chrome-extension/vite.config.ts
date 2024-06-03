@@ -49,6 +49,9 @@ export default defineConfig({
   define: {
     'process.env.NODE_ENV': `"production"`,
     'process.env.OPENAI_KEY': `"${process.env.OPENAI_KEY}"`,
+    'process.env.AZURE_OPENAI_KEY': `"${process.env.AZURE_OPENAI_KEY}"`,
+    'process.env.AZURE_OPENAI_ENDPOINT': `"${process.env.AZURE_OPENAI_ENDPOINT}"`,
+    'process.env.AZURE_OPENAI_VERSION': `"${process.env.AZURE_OPENAI_VERSION}"`,
     'process.env.GOOGLEAI_KEY': `"${process.env.GOOGLEAI_KEY}"`,
   },
 });

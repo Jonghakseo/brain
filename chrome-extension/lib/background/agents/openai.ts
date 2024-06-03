@@ -1,4 +1,4 @@
-import OpenAI from 'openai';
+import OpenAI, { AzureOpenAI } from 'openai';
 import {
   ChatCompletion,
   ChatCompletionMessage,
@@ -24,11 +24,25 @@ export class OpenAILLM implements BaseLLM {
   isJson = false;
   useAnyCall = true;
   abortController = new AbortController();
+  platform: 'openai' | 'azure-openai' = 'openai';
 
   constructor(model: Model) {
     this.model = model;
-    const apiKey = process.env.OPENAI_KEY as string;
-    this.client = new OpenAI({ apiKey });
+    const azureApiKey = process.env.AZURE_OPENAI_KEY as string;
+    const azureEndpoint = process.env.AZURE_OPENAI_ENDPOINT as string;
+    const azureApiVersion = process.env.AZURE_OPENAI_VERSION as string;
+    if (azureApiKey && azureEndpoint) {
+      this.platform = 'azure-openai';
+      this.client = new AzureOpenAI({
+        apiKey: azureApiKey,
+        endpoint: azureEndpoint,
+        apiVersion: azureApiVersion || '2024-02-01',
+      });
+    } else {
+      this.platform = 'openai';
+      const openaiApiKey = process.env.OPENAI_KEY as string;
+      this.client = new OpenAI({ apiKey: openaiApiKey });
+    }
   }
 
   log(...args: Parameters<typeof console.log>) {
@@ -225,7 +239,7 @@ export class OpenAILLM implements BaseLLM {
     const { topP, temperature, maxTokens, systemPrompt } = this.config;
 
     const systemMessage: ChatCompletionSystemMessageParam = this.makeSystemMessage(systemPrompt);
-
+    const isOpenai = this.platform === 'openai';
     const stream = this.client.beta.chat.completions
       .runTools({
         model: this.model,
@@ -234,7 +248,7 @@ export class OpenAILLM implements BaseLLM {
         max_tokens: maxTokens,
         top_p: topP,
         stream: true,
-        stream_options: { include_usage: true },
+        ...(isOpenai && { stream_options: { include_usage: true } }),
         tools: this.useAnyCall ? this.tools.concat(anyCall) : this.tools,
         tool_choice: this.toolChoice,
         response_format: {
