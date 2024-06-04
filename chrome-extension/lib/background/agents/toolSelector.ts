@@ -12,7 +12,6 @@ export class ToolSelector extends OpenAILLM {
     // this.model = 'gpt-4o';
     this.isJson = true;
     this.config = {
-      model: 'gpt-4o',
       temperature: 1.9,
       topP: 1,
       maxTokens: 4000,

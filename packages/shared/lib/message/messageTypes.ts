@@ -23,6 +23,14 @@ export interface ChatMessage extends BaseMessage {
   };
   response: unknown;
 }
+export interface SuggestMessage extends BaseMessage {
+  type: 'Suggest';
+  payload: {
+    content: Chat['content'];
+    history?: Chat[];
+  };
+  response: string;
+}
 
 // export interface GenerateProgramMessage extends BaseMessage {
 //   type: 'GenerateProgram';
@@ -39,7 +47,7 @@ export interface RunProgramMessage extends BaseMessage {
   response: unknown;
 }
 
-export type Message = CaptureMessage | ChatMessage | RunProgramMessage | AbortMessage;
+export type Message = CaptureMessage | ChatMessage | RunProgramMessage | AbortMessage | SuggestMessage;
 
 export interface PartyEffectMessage extends BaseMessage {
   type: 'partyEffect'; // only celebrate

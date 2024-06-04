@@ -18,7 +18,7 @@ import type {
 import { Screen } from '@lib/background/program/Screen';
 import { ToolSelector } from '@lib/background/agents/toolSelector';
 import { BaseLLM } from '@lib/background/agents/base';
-import { replaceImageMessages, splitArrayByIndex } from '@lib/background/agents/converters';
+import { convertChatToOpenAIFormat, replaceImageMessages, splitArrayByIndex } from '@lib/background/agents/converters';
 import { ALL_TOOLS, anyCall, toolManagingTools } from '@lib/background/tool';
 
 const camelCaseToSentence = (camelCase: string) => {
@@ -253,30 +253,7 @@ export class LLM {
   }
 
   private convertChatToOpenAIFormat(chat: Chat): ChatCompletionAssistantMessageParam | ChatCompletionUserMessageParam {
-    const detail = this.extensionConfig?.detailAnalyzeImage ? 'high' : 'auto';
-    if (chat.type === 'user') {
-      const content: ChatCompletionUserMessageParam['content'] = [];
-      if (chat.content.text) {
-        content.push({ type: 'text', text: chat.content.text });
-      }
-      if (chat.content.image) {
-        content.push({
-          type: 'image_url',
-          image_url: {
-            url: chat.content.image.base64,
-            detail,
-          },
-        });
-        if (chat.content.image.w && chat.content.image.h) {
-          content.push({
-            type: 'text',
-            text: `This Image's width:${chat.content.image.w} height:${chat.content.image.h}`,
-          });
-        }
-      }
-      return { role: 'user', content };
-    }
-    return { role: 'assistant', content: chat.content.text };
+    return convertChatToOpenAIFormat(chat, this.extensionConfig?.detailAnalyzeImage);
   }
 
   private async determineUseLowModel(messages: ChatCompletionMessageParam[]) {

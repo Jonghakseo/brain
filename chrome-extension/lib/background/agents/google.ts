@@ -20,7 +20,7 @@ export class GoogleLLM implements BaseLLM {
   name = 'GoogleLLM';
   model: 'gemini-1.5-flash';
   sdk: GoogleGenerativeAI;
-  config: LLMConfig | null = null;
+  config: Omit<LLMConfig, 'model'> | null = null;
   client: GenerativeModel | null = null;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   tools: RunnableTools<any[]> = [];

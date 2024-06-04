@@ -1,4 +1,9 @@
-import type { ChatCompletionMessageParam, ChatCompletionUserMessageParam } from 'openai/resources';
+import type {
+  ChatCompletionAssistantMessageParam,
+  ChatCompletionMessageParam,
+  ChatCompletionUserMessageParam,
+} from 'openai/resources';
+import type { Chat } from '@chrome-extension-boilerplate/shared';
 
 export function replaceImageMessages(
   messages: ChatCompletionMessageParam[],
@@ -49,4 +54,34 @@ export function replaceUserChatTextMessage(messages: ChatCompletionMessageParam[
 
 export function splitArrayByIndex<T>(array: T[], index: number) {
   return [array.slice(0, index), array.slice(index)] as const;
+}
+
+export function convertChatToOpenAIFormat(
+  chat: Chat,
+  imageDetail?: boolean,
+): ChatCompletionAssistantMessageParam | ChatCompletionUserMessageParam {
+  const detail = imageDetail ? 'high' : 'auto';
+  if (chat.type === 'user') {
+    const content: ChatCompletionUserMessageParam['content'] = [];
+    if (chat.content.text) {
+      content.push({ type: 'text', text: chat.content.text });
+    }
+    if (chat.content.image) {
+      content.push({
+        type: 'image_url',
+        image_url: {
+          url: chat.content.image.base64,
+          detail,
+        },
+      });
+      if (chat.content.image.w && chat.content.image.h) {
+        content.push({
+          type: 'text',
+          text: `This Image's width:${chat.content.image.w} height:${chat.content.image.h}`,
+        });
+      }
+    }
+    return { role: 'user', content };
+  }
+  return { role: 'assistant', content: chat.content.text };
 }

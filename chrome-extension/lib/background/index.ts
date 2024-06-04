@@ -5,6 +5,7 @@ import { LLM } from '@lib/background/llm';
 import { Screen } from '@lib/background/program/Screen';
 import { OpenAILLM } from '@lib/background/agents/openai';
 import { GoogleLLM } from '@lib/background/agents/google';
+import { SuggestionLLM } from '@lib/background/agents/suggestion';
 
 /**
  * when click the extension icon, open(or close) the side panel automatically
@@ -37,6 +38,15 @@ chrome.runtime.onConnect.addListener(port => {
         case 'ScreenCapture': {
           const image = await Screen.capture();
           sendResponse({ type: 'ScreenCapture', response: image });
+          break;
+        }
+        case 'Suggest': {
+          const suggest = new SuggestionLLM();
+          const result = await suggest.chatSuggest({
+            text: message.payload.content.text ?? '',
+            history: message.payload.history ?? [],
+          });
+          sendResponse({ type: 'Suggest', response: result });
           break;
         }
         case 'Chat': {

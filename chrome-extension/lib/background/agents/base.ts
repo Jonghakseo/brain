@@ -6,7 +6,7 @@ import { ChatCompletionRunner } from 'openai/lib/ChatCompletionRunner';
 export abstract class BaseLLM {
   name: string = 'BaseLLM';
   model: string | undefined;
-  config: LLMConfig | null = null;
+  config: Omit<LLMConfig, 'model'> | null = null;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   tools: RunnableTools<any[]> = [];
   toolChoice: 'required' | 'auto' | 'none' = 'auto';

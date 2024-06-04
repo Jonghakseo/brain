@@ -15,9 +15,9 @@ import { anyCall } from '@lib/background/tool';
 type Model = Extract<ChatModel, 'gpt-4o' | 'gpt-3.5-turbo'>;
 export class OpenAILLM implements BaseLLM {
   name: string = 'OpenAILLM';
-  client: OpenAI;
+  client: OpenAI | AzureOpenAI;
   model: Model;
-  config: LLMConfig | null = null;
+  config: Omit<LLMConfig, 'model'> | null = null;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   tools: RunnableTools<any[]> = [];
   toolChoice: 'required' | 'auto' | 'none' = 'auto';
