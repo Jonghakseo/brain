@@ -25,10 +25,7 @@ export interface ChatMessage extends BaseMessage {
 }
 export interface SuggestMessage extends BaseMessage {
   type: 'Suggest';
-  payload: {
-    content: Chat['content'];
-    history?: Chat[];
-  };
+  payload: string;
   response: string;
 }
 

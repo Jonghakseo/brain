@@ -20,9 +20,9 @@ export class SuggestionLLM extends OpenAILLM {
 
   async chatSuggest({ text, history }: { text: string; history: Chat[] }) {
     this.config = {
-      temperature: 0.6,
-      topP: 0.4,
-      maxTokens: 2000,
+      temperature: 0.2,
+      topP: 0.7,
+      maxTokens: 3000,
       systemPrompt: 'You are a thoughtful and well-grounded suggestion maker.',
     };
 
@@ -33,12 +33,23 @@ export class SuggestionLLM extends OpenAILLM {
         ...historyWithoutImage,
         {
           role: 'user',
-          content: `Suggest sentence of word After "${text}". For example, After 'hello', say 'world'. 
-          You should suggest a sentence that makes sense. Please respond with JSON format. -> {"after": "world"}`,
+          content: `Suggest the rest of the sentence by inference to complete it. Before text is "${text}". 
+          For example, After 'hello', say 'world'. 
+          You should suggest a sentence that makes sense. Please respond with JSON format. -> {"after": "world"}
+          If it's already a complete sentence, return an empty string. -> {"after": ""}
+          `,
         },
       ],
     });
 
-    return res.choices.at(0)?.message.content ?? '';
+    const content = res.choices.at(0)?.message.content ?? '';
+
+    if (!content) {
+      return '';
+    }
+
+    const json = JSON.parse(content);
+    console.log('Suggest response', json);
+    return json.after || '';
   }
 }

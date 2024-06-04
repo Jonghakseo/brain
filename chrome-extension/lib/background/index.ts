@@ -1,6 +1,6 @@
 // eslint-disable-next-line @typescript-eslint/triple-slash-reference
 import 'webextension-polyfill';
-import { Message, settingStorage } from '@chrome-extension-boilerplate/shared';
+import { conversationStorage, Message, settingStorage } from '@chrome-extension-boilerplate/shared';
 import { LLM } from '@lib/background/llm';
 import { Screen } from '@lib/background/program/Screen';
 import { OpenAILLM } from '@lib/background/agents/openai';
@@ -42,9 +42,10 @@ chrome.runtime.onConnect.addListener(port => {
         }
         case 'Suggest': {
           const suggest = new SuggestionLLM();
+          const { chats } = await conversationStorage.get();
           const result = await suggest.chatSuggest({
-            text: message.payload.content.text ?? '',
-            history: message.payload.history ?? [],
+            text: message.payload,
+            history: chats,
           });
           sendResponse({ type: 'Suggest', response: result });
           break;

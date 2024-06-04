@@ -44,7 +44,13 @@ function ChatSendArea({ onSend, loading }: ChatSendAreaProps) {
     imageRef.current!.value = '';
   };
 
+  const resetInput = () => {
+    setText('');
+    resetImage();
+  };
+
   const onChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    debouncedSuggest.cancel();
     setText(e.target.value);
   };
 
@@ -72,9 +78,22 @@ function ChatSendArea({ onSend, loading }: ChatSendAreaProps) {
     if (e.nativeEvent.isComposing) {
       return;
     }
-    if (!e.metaKey && !e.shiftKey && e.key === 'Enter') {
-      formRef.current?.requestSubmit();
-      e.preventDefault();
+    if (e.shiftKey || e.metaKey) {
+      return;
+    }
+    switch (e.key) {
+      case 'Enter': {
+        formRef.current?.requestSubmit();
+        e.preventDefault();
+        return;
+      }
+      case 'Tab': {
+        debouncedSuggest.call('Suggest', text).then(text => {
+          setText(prev => prev + text);
+        });
+        e.preventDefault();
+        return;
+      }
     }
   };
 
@@ -94,8 +113,7 @@ function ChatSendArea({ onSend, loading }: ChatSendAreaProps) {
       }
     } finally {
       loadingRef.current = false;
-      setText('');
-      resetImage();
+      resetInput();
     }
   };
 
@@ -207,7 +225,7 @@ function ChatSendArea({ onSend, loading }: ChatSendAreaProps) {
         onChange={onChange}
         onKeyDown={onKeyDown}
         value={text}
-        placeholder="Your Message"
+        placeholder="Your Message (Tab: Suggest)"
         className="min-h-full !border-0 transition-all"
         containerProps={{ className: 'grid h-full  min-w-[120px]' }}
         labelProps={{ className: 'before:content-none after:content-none' }}
@@ -249,3 +267,26 @@ const calculateImageSize = (base64Image: string) => {
     image.onerror = reject;
   });
 };
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const debounce = <F extends (...args: any[]) => any>(fn: F, delay: number) => {
+  let timeout: number;
+  const cancel = () => clearTimeout(timeout);
+  return {
+    cancel,
+    call: (...args: Parameters<F>) => {
+      return new Promise((resolve, reject) => {
+        clearTimeout(timeout);
+        timeout = window.setTimeout(() => {
+          try {
+            resolve(fn(...args));
+          } catch (error) {
+            reject(error);
+          }
+        }, delay);
+      });
+    },
+  };
+};
+
+const debouncedSuggest = debounce(sendToBackground, 500);
