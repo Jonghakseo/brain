@@ -106,7 +106,7 @@ export class LLM {
         onFunctionCallResult: functionCallResult => {
           if (functionNameRaw) {
             history.push({
-              role: 'function',
+              role: 'assistant',
               name: functionNameRaw,
               content: functionCallResult,
             });

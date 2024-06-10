@@ -20,14 +20,16 @@ export default function ChatProfile({ type, createdAt }: ChatProfileProps) {
 
   //todo copy, delete, edit
   return (
-    <PopoverWithHover content="You can copy on click!" placement="bottom-end" disabled={!isAi}>
-      <Avatar
-        className={`shrink-0 mt-2 ${createdAt ? 'cursor-pointer' : ''}`}
-        size="sm"
-        src={src}
-        alt="avatar"
-        onClick={copyContent}
-      />
-    </PopoverWithHover>
+    <div className="shrink-0">
+      <PopoverWithHover content="You can copy on click!" placement="bottom-end" disabled={!isAi}>
+        <Avatar
+          className={`shrink-0 mt-2 ${createdAt ? 'cursor-pointer' : ''}`}
+          size="sm"
+          src={src}
+          alt="avatar"
+          onClick={copyContent}
+        />
+      </PopoverWithHover>
+    </div>
   );
 }
