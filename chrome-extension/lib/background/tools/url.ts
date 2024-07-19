@@ -102,18 +102,19 @@ async function searchBookmark(params: z.infer<typeof SearchBookmarkParams>) {
 }
 
 const GetHistoryParams = z.object({
-  recentDays: z.number().int().positive().min(1).max(30).default(7).optional(),
+  recentDays: z.number().int().positive().min(1).default(60).optional(),
+  maxResults: z.number().int().positive().default(20).optional(),
   sortBy: z.enum(['visitCount', 'lastVisitTime']).default('lastVisitTime').optional(),
   searchText: z.string().optional(),
 });
 
-async function getHistory({ recentDays = 7, searchText = '', sortBy }: z.infer<typeof GetHistoryParams>) {
+async function getHistory({ recentDays = 60, maxResults, searchText = '', sortBy }: z.infer<typeof GetHistoryParams>) {
   const millisecondsPerDay = 1000 * 60 * 60 * 24;
   const daysAgoTime = Date.now() - millisecondsPerDay * recentDays;
 
   const historyItems = await chrome.history.search({
     text: searchText,
-    maxResults: 50,
+    maxResults: maxResults ?? 20,
     startTime: daysAgoTime,
     endTime: Date.now(),
   });
@@ -137,7 +138,7 @@ async function getHistory({ recentDays = 7, searchText = '', sortBy }: z.infer<t
       title: history.title,
       url: history.url,
       visitCount: history.visitCount,
-      lastVisitTime: history.lastVisitTime,
+      lastVisitTime: history.lastVisitTime ? new Date(history.lastVisitTime).toISOString() : null,
     }))
     .slice(0, 20);
 }
