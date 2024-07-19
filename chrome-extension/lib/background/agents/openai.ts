@@ -12,7 +12,7 @@ import { ChatCompletionRunner } from 'openai/lib/ChatCompletionRunner';
 import { BaseLLM } from '@lib/background/agents/base';
 import { anyCall } from '@lib/background/tool';
 
-type Model = Extract<ChatModel, 'gpt-4o' | 'gpt-3.5-turbo'>;
+type Model = Extract<ChatModel, 'gpt-4o' | 'gpt-4-turbo' | 'gpt-3.5-turbo'> | 'gpt-4o-mini';
 export class OpenAILLM implements BaseLLM {
   name: string = 'OpenAILLM';
   client: OpenAI | AzureOpenAI;

@@ -97,14 +97,14 @@ importers:
   chrome-extension:
     dependencies:
       '@google/generative-ai':
-        specifier: ^0.11.3
-        version: 0.11.3
+        specifier: ^0.15.0
+        version: 0.15.0
       dotenv:
         specifier: ^16.4.5
         version: 16.4.5
       openai:
-        specifier: ^4.47.1
-        version: 4.47.1
+        specifier: ^4.52.7
+        version: 4.52.7
       webextension-polyfill:
         specifier: ^0.11.0
         version: 0.11.0
@@ -656,8 +656,8 @@ packages:
   '@floating-ui/utils@0.2.2':
     resolution: {integrity: sha512-J4yDIIthosAsRZ5CPYP/jQvUAQtlZTTD/4suA08/FEnlxqW3sKS9iAhgsa9VYLZ6vDHn/ixJgIqRQPotoBjxIw==}
 
-  '@google/generative-ai@0.11.3':
-    resolution: {integrity: sha512-QtQ1hz6rcybbw35uxXlFF26KNnaTVr2oWwnmDkC1M35KdzN4tVc4wakgJp8uXbY9KDCNHksyp11DbFg0HPckZQ==}
+  '@google/generative-ai@0.15.0':
+    resolution: {integrity: sha512-zs37judcTYFJf1U7tnuqnh7gdzF6dcWj9pNRxjA5JTONRoiQ0htrRdbefRFiewOIfXwhun5t9hbd2ray7812eQ==}
     engines: {node: '>=18.0.0'}
 
   '@humanwhocodes/config-array@0.11.14':
@@ -2667,8 +2667,8 @@ packages:
     resolution: {integrity: sha512-kbpaSSGJTWdAY5KPVeMOKXSrPtr8C8C7wodJbcsd51jRnmD+GZu8Y0VoU6Dm5Z4vWr0Ig/1NKuWRKf7j5aaYSg==}
     engines: {node: '>=6'}
 
-  openai@4.47.1:
-    resolution: {integrity: sha512-WWSxhC/69ZhYWxH/OBsLEirIjUcfpQ5+ihkXKp06hmeYXgBBIUCa9IptMzYx6NdkiOCsSGYCnTIsxaic3AjRCQ==}
+  openai@4.52.7:
+    resolution: {integrity: sha512-dgxA6UZHary6NXUHEDj5TWt8ogv0+ibH+b4pT5RrWMjiRZVylNwLcw/2ubDrX5n0oUmHX/ZgudMJeemxzOvz7A==}
     hasBin: true
 
   optionator@0.9.4:
@@ -3803,7 +3803,7 @@ snapshots:
 
   '@floating-ui/utils@0.2.2': {}
 
-  '@google/generative-ai@0.11.3': {}
+  '@google/generative-ai@0.15.0': {}
 
   '@humanwhocodes/config-array@0.11.14':
     dependencies:
@@ -6251,7 +6251,7 @@ snapshots:
     dependencies:
       mimic-fn: 2.1.0
 
-  openai@4.47.1:
+  openai@4.52.7:
     dependencies:
       '@types/node': 18.19.33
       '@types/node-fetch': 2.6.11
@@ -6365,7 +6365,7 @@ snapshots:
       camelcase-css: 2.0.1
       postcss: 8.4.38
 
-  postcss-load-config@4.0.2(postcss@8.4.38)(ts-node@10.9.2(@swc/core@1.5.5)(@types/node@20.12.11)(typescript@5.2.2)):
+  postcss-load-config@4.0.2(postcss@8.4.38)(ts-node@10.9.2(@types/node@20.12.11)(typescript@5.2.2)):
     dependencies:
       lilconfig: 3.0.0
       yaml: 2.3.4
@@ -6880,7 +6880,7 @@ snapshots:
       postcss: 8.4.38
       postcss-import: 15.1.0(postcss@8.4.38)
       postcss-js: 4.0.1(postcss@8.4.38)
-      postcss-load-config: 4.0.2(postcss@8.4.38)(ts-node@10.9.2(@swc/core@1.5.5)(@types/node@20.12.11)(typescript@5.2.2))
+      postcss-load-config: 4.0.2(postcss@8.4.38)(ts-node@10.9.2(@types/node@20.12.11)(typescript@5.2.2))
       postcss-nested: 6.0.1(postcss@8.4.38)
       postcss-selector-parser: 6.0.16
       resolve: 1.22.8
@@ -6987,7 +6987,7 @@ snapshots:
       execa: 5.1.1
       globby: 11.1.0
       joycon: 3.1.1
-      postcss-load-config: 4.0.2(postcss@8.4.38)(ts-node@10.9.2(@swc/core@1.5.5)(@types/node@20.12.11)(typescript@5.2.2))
+      postcss-load-config: 4.0.2(postcss@8.4.38)(ts-node@10.9.2(@types/node@20.12.11)(typescript@5.2.2))
       resolve-from: 5.0.0
       rollup: 4.17.2
       source-map: 0.8.0-beta.0

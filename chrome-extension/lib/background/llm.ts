@@ -82,7 +82,7 @@ export class LLM {
       history.push(this.convertChatToOpenAIFormat(chat));
       if (this.extensionConfig?.autoToolSelection) {
         const useLowModel = await this.determineUseLowModel(history);
-        this.llm.model = useLowModel ? 'gpt-3.5-turbo' : 'gpt-4o';
+        this.llm.model = useLowModel ? 'gpt-4o-mini' : 'gpt-4o';
       }
       this.llm.log('STEPS TOOL', this.llm.tools);
       let functionName: string | null = null;
@@ -214,7 +214,7 @@ export class LLM {
     // Auto select model by messages. It depends on autoSelectModel setting
     if (autoSelectModel) {
       const useLowModel = await this.determineUseLowModel(messages);
-      this.llm.model = useLowModel ? 'gpt-3.5-turbo' : 'gpt-4o';
+      this.llm.model = useLowModel ? 'gpt-4o-mini' : 'gpt-4o';
     }
 
     // Remove all images except last image

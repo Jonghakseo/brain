@@ -14,7 +14,7 @@ type BillingInfo = {
   };
 };
 
-type Model = 'gpt-3.5-turbo' | 'gpt-4o' | 'gemini';
+type Model = 'gpt-3.5-turbo' | 'gpt-4o' | 'gemini' | 'gpt-4o-mini' | 'gpt-4-turbo';
 
 type BillingInfoStorage = BaseStorage<BillingInfo> & {
   addInputTokens: (token: number, model: Model) => Promise<void>;
@@ -85,8 +85,10 @@ function calculateInputTokenPrice(token: number, model: Model) {
       return token * 0.005 * 0.001; // US$0.005 /1K tokens
     case 'gemini':
       return 0; // Free
-    default:
-      throw new Error('Invalid model');
+    case 'gpt-4-turbo':
+      return token * 0.01 * 0.001; // US$0.01 /1K tokens
+    case 'gpt-4o-mini':
+      return token * 0.00015 * 0.001; // US$0.00015 /1K tokens
   }
 }
 
@@ -98,7 +100,9 @@ function calculateOutputTokenPrice(token: number, model: Model) {
       return token * 0.015 * 0.001; // US$0.015 /1K tokens
     case 'gemini':
       return 0; // Free
-    default:
-      throw new Error('Invalid model');
+    case 'gpt-4o-mini':
+      return token * 0.0006 * 0.001; // US$0.0006 /1K tokens
+    case 'gpt-4-turbo':
+      return token * 0.03 * 0.001; // US$0.03 /1K tokens
   }
 }

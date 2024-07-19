@@ -8,7 +8,7 @@ export class SuggestionLLM extends OpenAILLM {
   isJson = true;
 
   constructor() {
-    super('gpt-3.5-turbo');
+    super('gpt-4o-mini');
   }
 
   makeSystemMessage(systemPrompt: string): ChatCompletionSystemMessageParam {

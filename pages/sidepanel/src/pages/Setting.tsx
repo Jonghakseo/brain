@@ -39,7 +39,9 @@ export default function Setting() {
               settingStorage.updateLLMConfig('model', value as 'gpt-4o' | 'gpt-3.5-turbo' | 'gemini-1.5-flash');
             }}>
             <Option value="gpt-4o">GPT-4o</Option>
+            <Option value="gpt-4o-mini">GPT-4o-mini</Option>
             <Option value="gpt-3.5-turbo">GPT-3.5 turbo</Option>
+            <Option value="gpt-4-turbo">GPT-4 turbo</Option>
             <Option value="gemini-1.5-flash">Gemini 1.5 flash</Option>
           </Select>
           <Input
@@ -130,7 +132,7 @@ export default function Setting() {
             }}
           />
           <Switch
-            label="Auto Switch GPT3.5 Turbo (detault: Core Model)"
+            label="Auto Switch gpt4o-mini (detault: Core Model)"
             defaultChecked={extensionConfig.autoSelectModel}
             onChange={e => {
               settingStorage.updateExtensionConfig('autoSelectModel', e.currentTarget.checked);

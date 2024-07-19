@@ -2,7 +2,7 @@ import { BaseStorage, createStorage, StorageType } from './base';
 
 type Setting = {
   llmConfig: {
-    model: 'gemini-1.5-flash' | 'gpt-4o' | 'gpt-3.5-turbo';
+    model: 'gemini-1.5-flash' | 'gpt-3.5-turbo' | 'gpt-4o' | 'gpt-4o-mini' | 'gpt-4-turbo';
     systemPrompt: string;
     maxTokens: number;
     topP: number;
