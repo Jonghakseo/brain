@@ -12,6 +12,17 @@ import { ChatCompletionRunner } from 'openai/lib/ChatCompletionRunner';
 import { BaseLLM } from '@lib/background/agents/base';
 import { anyCall } from '@lib/background/tool';
 
+const getAzureApiVersion = (model: Model) => {
+  switch (model) {
+    case 'gpt-4o':
+      return '2024-02-01';
+    case 'gpt-4o-mini':
+      return '2023-03-15-preview';
+    default:
+      return '2024-02-01';
+  }
+};
+
 type Model = Extract<ChatModel, 'gpt-4o' | 'gpt-4-turbo' | 'gpt-3.5-turbo'> | 'gpt-4o-mini';
 export class OpenAILLM implements BaseLLM {
   name: string = 'OpenAILLM';
@@ -30,13 +41,12 @@ export class OpenAILLM implements BaseLLM {
     this.model = model;
     const azureApiKey = process.env.AZURE_OPENAI_KEY as string;
     const azureEndpoint = process.env.AZURE_OPENAI_ENDPOINT as string;
-    const azureApiVersion = process.env.AZURE_OPENAI_VERSION as string;
     if (azureApiKey && azureEndpoint) {
       this.platform = 'azure-openai';
       this.client = new AzureOpenAI({
         apiKey: azureApiKey,
         endpoint: azureEndpoint,
-        apiVersion: azureApiVersion || '2024-02-01',
+        apiVersion: getAzureApiVersion(model),
       });
     } else {
       this.platform = 'openai';
